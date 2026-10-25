@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#11141a" media="(prefers-color-scheme: dark)">
+<title>高考英语 · 语言运用</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="英语刷题">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f4f5f7;
+    --card: #ffffff;
+    --text: #15181d;
+    --text-2: #5b6470;
+    --line: #e3e6ea;
+    --accent: #3b5bdb;
+    --accent-weak: #edf0fe;
+    --ok: #15803d;
+    --ok-weak: #e7f6ec;
+    --bad: #c62828;
+    --bad-weak: #fdecec;
+    --shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 8px 24px rgba(16, 24, 40, .06);
+    --fs-passage: 17px;
+    --fs-ui: 15px;
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #11141a;
+      --card: #191d25;
+      --text: #e9ecf1;
+      --text-2: #9aa4b2;
+      --line: #262c36;
+      --accent: #7d97ff;
+      --accent-weak: #1c2438;
+      --ok: #4ade80;
+      --ok-weak: #14261a;
+      --bad: #ff8080;
+      --bad-weak: #2a1618;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4);
+    }
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+    overscroll-behavior: none;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  /* 控件类元素：长按不选中、不留长按菜单；正文保持可选中 */
+  button, .blank, .opt, .chip, .icon-btn, .fs-btn {
+    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial,
+      "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    font-size: var(--fs-ui);
+    line-height: 1.6;
+    overscroll-behavior-y: none;
+  }
+  button { font: inherit; color: inherit; border: 0; background: none; touch-action: manipulation; }
+
+  /* ---------- 顶栏 ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 20;
+    display: flex; align-items: center; gap: 10px;
+    padding: calc(env(safe-area-inset-top) + 10px) 16px 10px;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: saturate(180%) blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar h1 { flex: 1; margin: 0; font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
+  .topbar .sub { flex: 1; min-width: 0; }
+  .topbar .sub b { display: block; font-size: 16px; font-weight: 600; }
+  .topbar .sub span { display: block; font-size: 12px; color: var(--text-2); }
+  .icon-btn {
+    width: 40px; height: 40px; border-radius: 12px;
+    display: grid; place-items: center; color: var(--text-2);
+  }
+  .icon-btn:active { background: var(--accent-weak); }
+  .fs-btn {
+    height: 34px; padding: 0 12px; border-radius: 999px;
+    border: 1px solid var(--line); color: var(--text-2); font-size: 13px;
+  }
+
+  /* ---------- 通用 ---------- */
+  .page { padding: 16px 16px calc(96px + env(safe-area-inset-bottom)); max-width: 720px; margin: 0 auto; }
+  .card {
+    background: var(--card); border-radius: var(--radius);
+    border: 1px solid var(--line); box-shadow: var(--shadow);
+  }
+  .muted { color: var(--text-2); }
+  .chip {
+    display: inline-block; padding: 2px 8px; border-radius: 999px;
+    background: var(--accent-weak); color: var(--accent);
+    font-size: 12px; font-weight: 600;
+  }
+
+  /* ---------- 首页 ---------- */
+  .hero { margin-bottom: 18px; }
+  .hero h2 { margin: 0 0 6px; font-size: 22px; letter-spacing: -.02em; }
+  .hero p { margin: 0; color: var(--text-2); font-size: 13px; }
+  .list { display: grid; gap: 10px; }
+  .paper-card { display: flex; align-items: center; gap: 12px; padding: 14px; width: 100%; text-align: left; }
+  .paper-card:active { transform: scale(.99); }
+  .paper-main { flex: 1; min-width: 0; }
+  .paper-main b { display: block; font-size: 15.5px; font-weight: 600; margin-bottom: 3px; }
+  .paper-main span { font-size: 12.5px; color: var(--text-2); }
+  .paper-meta { text-align: right; font-size: 12px; color: var(--text-2); display: grid; gap: 4px; justify-items: end; }
+
+  .install-tip {
+    margin: 16px 0 0; padding: 14px;
+    border-radius: 12px; border: 1px dashed var(--line); background: var(--card);
+    font-size: 12.5px; line-height: 1.7; color: var(--text-2);
+  }
+  .install-tip b { display: block; color: var(--text); font-size: 13px; margin-bottom: 3px; }
+
+  /* ---------- 答题 ---------- */
+  .progress { font-size: 12.5px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+  .instruction {
+    margin: 0 0 12px; padding: 12px 14px;
+    background: var(--accent-weak); color: var(--accent);
+    border-radius: 12px; font-size: 13px; line-height: 1.55;
+  }
+  .passage-card { padding: 18px 16px; }
+  .passage-card p {
+    margin: 0 0 14px; font-size: var(--fs-passage); line-height: 1.78;
+    letter-spacing: .002em; text-align: left; word-break: break-word;
+  }
+  .passage-card p:last-child { margin-bottom: 0; }
+
+  /* 来源标注 */
+  .source {
+    display: block; margin: 0 0 10px;
+    font-size: 12.5px; color: var(--text-2); letter-spacing: .01em;
+  }
+  .source b { font-weight: 500; }
+
+  .blank {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 2.5em; height: 1.7em; margin: 0 .1em; padding: 0 .35em;
+    vertical-align: -.18em;
+    border-bottom: 2px solid var(--accent);
+    border-radius: 6px 6px 2px 2px;
+    background: var(--accent-weak); color: var(--accent);
+    font-size: .9em; font-weight: 700; font-variant-numeric: tabular-nums;
+    transition: background .12s ease;
+  }
+  .blank.filled { background: var(--accent); color: #fff; }
+  .blank.ok { background: var(--ok-weak); color: var(--ok); border-bottom-color: var(--ok); }
+  .blank.bad { background: var(--bad-weak); color: var(--bad); border-bottom-color: var(--bad); }
+  .blank input {
+    /* 16px 是 iOS 不触发页面缩放的下限，不能更小 */
+    width: 4.2em; border: 0; background: transparent; color: var(--text);
+    font: inherit; font-size: 16px; font-weight: 600; text-align: center; outline: none; padding: 0;
+  }
+  .blank input::placeholder { color: var(--text-2); font-weight: 400; }
+
+  /* ---------- 底栏 ---------- */
+  .actionbar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    display: flex; gap: 10px; align-items: center;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--line);
+  }
+  .btn {
+    flex: 1; height: 50px; border-radius: 14px;
+    display: grid; place-items: center;
+    font-size: 16px; font-weight: 600; letter-spacing: .01em;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:disabled { opacity: .45; }
+  .btn-ghost { flex: 0 0 auto; padding: 0 16px; color: var(--text-2); border: 1px solid var(--line); }
+  .btn:active:not(:disabled) { transform: scale(.985); }
+
+  /* ---------- 选项面板 ---------- */
+  .scrim {
+    position: fixed; inset: 0; z-index: 40; background: rgba(10, 12, 16, .42);
+    opacity: 0; pointer-events: none; transition: opacity .18s ease;
+  }
+  .scrim.show { opacity: 1; pointer-events: auto; }
+  .sheet {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+    transform: translateY(102%); transition: transform .22s cubic-bezier(.32, .72, 0, 1);
+    background: var(--card);
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -8px 40px rgba(10, 12, 16, .18);
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+    max-height: 76vh; max-height: 76dvh; display: flex; flex-direction: column;
+  }
+  .sheet.show { transform: translateY(0); }
+  .sheet-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 16px 18px 10px;
+  }
+  .sheet-head b { font-size: 16px; }
+  .sheet-head .muted { font-size: 12.5px; margin-left: auto; }
+  .sheet-body { overflow-y: auto; padding: 0 14px 6px; -webkit-overflow-scrolling: touch; }
+  .opt {
+    display: flex; align-items: center; gap: 12px; width: 100%;
+    min-height: 56px; padding: 12px 14px; margin-bottom: 8px;
+    border: 1px solid var(--line); border-radius: 12px;
+    font-size: 17px; text-align: left; line-height: 1.45;
+  }
+  .opt .letter {
+    flex: 0 0 28px; width: 28px; height: 28px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--accent-weak); color: var(--accent); font-size: 14px; font-weight: 700;
+  }
+  .opt[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-weak); }
+  .opt:active { background: var(--accent-weak); transform: scale(.995); }
+  .opt.ok { border-color: var(--ok); background: var(--ok-weak); }
+  .opt.bad { border-color: var(--bad); background: var(--bad-weak); }
+  .sheet-foot { padding: 8px 14px calc(6px + env(safe-area-inset-bottom)); display: flex; gap: 10px; }
+
+  /* ---------- 结果 ---------- */
+  .result {
+    display: flex; align-items: baseline; gap: 10px;
+    padding: 16px 18px; margin-bottom: 12px;
+    border-radius: var(--radius); border: 1px solid var(--line); background: var(--card);
+  }
+  .result .score { font-size: 32px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .result .max { color: var(--text-2); font-size: 15px; }
+  .result .detail { margin-left: auto; text-align: right; font-size: 12.5px; color: var(--text-2); }
+  .explain-card { padding: 14px 16px; margin-bottom: 12px; font-size: 14.5px; line-height: 1.7; }
+  .explain-card h4 { margin: 0 0 6px; font-size: 14px; color: var(--text-2); font-weight: 600; }
+  .toast {
+    position: fixed; left: 50%; bottom: calc(88px + env(safe-area-inset-bottom));
+    transform: translate(-50%, 8px); z-index: 60;
+    background: #1f2430; color: #fff; padding: 9px 16px; border-radius: 999px;
+    font-size: 13px; opacity: 0; pointer-events: none; transition: .18s ease;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="选项面板"></div>
+<div class="toast" id="toast"></div>
+
+<script>window.__BANK__ = {"papers":[{"id":"2026-广州零模","year":2026,"paperName":"广州零模","items":[{"id":"cloze-2026-广州零模-01","type":"cloze","no":41,"score":15,"scorePerBlank":1,"instruction":"阅读下面短文，从每题所给的A、B、C、D四个选项中选出最佳选项。","passage":"{{1}}, too.\nMy {{2}} is that we have different types of personal energy. For instance, I {{3}} to find the right switch in my mind to start cutting the fallen branches in my yard. Yet, at deer camp, I can cut and saw firewood with no problem, especially with a warm stew（炖肉）cooking. It's a {{4}} story with shopping. The thought of the mall {{5}} me, but I jump like a kid if my brother calls with the {{6}} of baseball caps on sale. My wife laughs and says, \" That's not an energy problem — it's pure {{7}}. \"\nShe was proven {{8}} last Saturday when my daughter Stephanie insisted we go hiking. We drove to the mountain outside town and started up. The track rose {{9}}, the sun burned, and my pack felt heavier each step. Soon, I was {{10}}. I thought about dropping it right there. I {{11}} future hikers find it and whisper, \" Poor soul.. he just {{12}} energy.\"\nThen Stephanie glanced back, saw my face, and said, \" Dad, there's an ice cream stand at the top.\" That was exactly what I'd been {{13}}. We set high aims, but it's the small {{14}} that keep us moving.\nNow it's June, the perfect time for outdoor activities and small treats. May your summer bring you wonderful adventures and nice ice-cream {{15}}.","questions":[{"n":1,"options":["idea","plan","version","habit"],"answer":"C","answerText":"version","explanation":"名词词义辨析。句意：我也有自己的个人版本的危机。A. idea想法；B. plan计划；C. version版本；D. habit习惯。前文“The world is facing an energy crisis.”提到全球能源危机，后文讲个人精力问题，用 version体现“和全球危机对应，但属于个人层面的同类情况”，故选C"},{"n":2,"options":["problem","theory","worry","secret"],"answer":"B","answerText":"theory","explanation":"名词词义辨析。句意：我的看法是，我们每个人都有不同的个人能量类型。A. problem问题；B. theory理论，看法；C. worry担心；D. secret秘密。后文“we have different types of personal energy”提到我们每个人都有不同的个人能量类型，这是作者的看法或理论。故选B"},{"n":3,"options":["struggle","desire","choose","pretend"],"answer":"A","answerText":"struggle","explanation":"动词词义辨析。句意：例如，我在脑海中努力寻找合适的办法来开始处理院子里掉落的树枝。A. struggle努力，费劲；B. desire渴望；C. choose选择；D. pretend假装。后文“Yet, at deer camp, I can cut and saw firewood with no problem, especially with a warm stew cooking.（然而，在鹿群营地，我能够轻松地砍柴、锯木头，而且还能一边享用热气腾腾的炖菜一边进行这"},{"n":4,"options":["true","familiar","typical","similar"],"answer":"D","answerText":"similar","explanation":"形容词词义辨析。句意：购物也是类似的情况。A. true真的；B. familiar熟悉的；C. typical典型的；D. similar相似的。前文讲“修剪枯枝费劲，砍柴轻松”的反差，后文讲“逛商场厌烦，买棒球帽积极”的反差，属于同类逻辑，用similar衔接最自然。故选D"},{"n":5,"options":["tires","confuses","shocks","disappoints"],"answer":"A","answerText":"tires","explanation":"动词词义辨析。句意：一想到购物中心那拥挤的场景就让我感到厌烦，但要是我哥哥打电话告诉我有棒球帽在打折，我就会像孩子一样兴奋起来。A. tires使疲惫，厌烦；B. confuses使困惑；C. shocks使震惊；D. disappoints使失望。but表转折，后文“I jump like a kid”是“兴奋”，前文必然是负面情绪，级拥挤的场景让作者厌烦。故选A"},{"n":6,"options":["excuse","order","thought","news"],"answer":"D","answerText":"news","explanation":"名词词义辨析。句意：一想到购物中心那拥挤的场景就让我感到厌烦，但要是我哥哥打电话告诉我有棒球帽在打折，我就会像孩子一样兴奋起来。A. excuse借口；B. order订单；C. thought想法；D. news新闻，消息。根据上文“I jump like a kid if my brother calls with the”可知，指哥哥打电话传递消息，故选D"},{"n":7,"options":["luck","laziness","imagination","motivation"],"answer":"D","answerText":"motivation","explanation":"名词词义辨析。句意：我的妻子笑着说道：“这根本不是精力问题——纯粹是动机问题（没动力）。” A. luck运气；B. laziness懒惰；C. imagination想象力；D. motivation动机。根据上文“to find the right switch in my mind to start cutting the fallen branches in my yard”以及购物的例子可知，妻子调侃作者：不想做的事就说没精力，想做的事就很积极，本质是“动机问题”，故"},{"n":8,"options":["clever","right","reliable","helpful"],"answer":"B","answerText":"right","explanation":"形容词词义辨析。句意：上周六，事实证明她是对的，当时我的女儿斯蒂芬妮坚持要我们去远足。A. clever聪明的；B. right正确的；C. reliable可靠的；D. helpful有帮助的。后文“the sun burned, and my pack felt heavier each step”徒步的经历印证了妻子的调侃，故选B"},{"n":9,"options":["sharply","slowly","regularly","smoothly"],"answer":"A","answerText":"sharply","explanation":"副词词义辨析。句意：道路陡然上升，烈日炎炎，每走一步，我的背包都显得愈发沉重。A. sharply急剧地；B. slowly缓慢地；C. regularly定期地；D. smoothly顺利地。后文“my pack felt heavier each step”说背包变沉，可知山路难走，sharply修饰rise表“陡峭爬升”，故选A"},{"n":10,"options":["lost","drowned","exhausted","concerned"],"answer":"C","answerText":"exhausted","explanation":"形容词词义辨析。句意：很快，我就精疲力竭了。A. lost丢失的；B. drowned淹死的；C. exhausted筋疲力尽的；D. concerned担心的。根据上文“the sun burned, and my pack felt heavier each step”可知，山路难走，背包沉重，作者很快精疲力竭。故选C"},{"n":11,"options":["doubted","expected","remembered","pictured"],"answer":"D","answerText":"pictured","explanation":"动词词义辨析。句意：我想象着未来的徒步者们会发现它，并轻声说道：“可怜的家伙……他只是耗尽了体力。” A. doubted怀疑；B. expected期待；C. remembered记得；D. pictured想象。根据后文“future hikers find it and whisper”可知，作者丢下自己的背包，开始想象将来被人发现的情景。故选D"},{"n":12,"options":["ran out of","got rid of","cut down on","gave up on"],"answer":"A","answerText":"ran out of","explanation":"动词短语辨析。句意：我想象着未来的徒步者们会发现它，并轻声说道：“可怜的家伙……他只是耗尽了体力。” A. ran out of用完；B. got rid of摆脱；C. cut down on减少；D. gave up on放弃。呼应开头“energy crisis”和个人精力话题，这里表 “精力耗尽”，是固定搭配。故选A"},{"n":13,"options":["fearing","seeking","trying","ignoring"],"answer":"B","answerText":"seeking","explanation":"动词词义辨析。句意：那正是我一直在寻找的。A. fearing恐惧；B. seeking寻找；C. trying尝试；D. ignoring忽视。根据上文“Dad, there’s an ice cream stand at the top.”以及前文作者筋疲力尽想放弃，女儿说山顶有冰淇淋摊，这是支撑他走下去的动力，也就是他此刻“渴望”的东西，故选B"},{"n":14,"options":["tips","steps","jokes","rewards"],"answer":"D","answerText":"rewards","explanation":"名词词义辨析。句意：我们设定远大的目标，但正是那些小小的奖励激励着我们不断前行。A. tips给小费；B. steps步伐；C. jokes玩笑；D. rewards奖励，激励。根据上文“Dad, there’s an ice cream stand at the top.”以及后文“Now it’s June, the perfect time for outdoor activities and small treats.（现在是六月了，正是进行户外活动和享受小惊喜的绝佳"},{"n":15,"options":["recipes","dreams","moments","makers"],"answer":"C","answerText":"moments","explanation":"名词词义辨析。句意：愿你的夏天带给你美妙的冒险经历和美好的冰淇淋时光。A. recipes食谱；B. dreams梦想；C. moments时刻；D. makers制作者。根据上文“Now it’s June, the perfect time for outdoor activities and small treats.（现在是六月了，正是进行户外活动和享受小惊喜的绝佳时节）”可知，指夏天带来美妙的冒险经历和美味的冰淇淋时光。故选C。56．an 57．holding 5"}]}]},{"id":"2026-广州一模","year":2026,"paperName":"广州一模","items":[{"id":"cloze-2026-广州一模-01","type":"cloze","no":41,"score":15,"scorePerBlank":1,"instruction":"阅读下面短文，从每题所给的A、B、C、D四个选项中选出最佳选项。","passage":"{{1}} it.\nFlying terrifies me-heart racing and legs shaking. I’'m not {{2}}. Research shows many share this fear. And for me, frequent short work flights only made it {{3}}, especially those lonely late-night ones.\nWith a visit to China coming, I {{4}} for an airline-offered course called\" Flying with Confidence \". At the airport, I was {{5}} by how many others had paid £399 to face the same fear. Among them was Mia, who stopped flying after a sudden panic attack. Now pregnant（怀孕）, she wanted to {{6}} passing her fear down to her child.\nPilots led the morning session. Learning {{7}}, like a plane gliding（滑行）100 miles if engine stop, was comforting. They emphasized the {{8}} safety rules and over 100,000 safe flights daily.\nThe afternoon focused on {{9}}. The doctor patiently explained that\" fear of fear\" is common. He taught\" breathe and squeeze\"- slow breaths to control stress chemicals, and muscle squeezes to focus the mind. We practiced and it {{10}}.\nThen came the {{11}} flight. As we boarded, earlier excitement turned to obvious {{12}}. Captain Miller provided a calming broadcast. When turbulence（气流） hit, I used the {{13}} technique. For the first time, panic didn't {{14}}.\nThe moment I exited the plane was emotional. My hands were still shaking, but my heart was already racing {{15}}, to my daughter in Beijing.","questions":[{"n":1,"options":["accept","ignore","test","overcome"],"answer":"D","answerText":"overcome","explanation":"作者害怕坐飞机，但女儿搬去北京，不得不克服这份恐惧；accept（接受）、ignore（忽视）、test（测 试） 均 不符语境"},{"n":2,"options":["different","alone","unique","brave"],"answer":"B","answerText":"alone","explanation":"下一句提到“很多人都有这种恐惧”,说明作者并非独自有此感受；different （不同的）、unique （独特的）、brave （勇敢的）均不符"},{"n":3,"options":["worse","less","easier","clearer"],"answer":"A","answerText":"worse","explanation":"频繁的短途工作航班让作者的飞行恐惧变得更严重；less （更少的）、easier （更容易的）、clearer （更清晰的） 均不符"},{"n":4,"options":["longed","planned","searched","registered"],"answer":"D","answerText":"registered","explanation":"作者报名参加了航空公司的课程，register for（报名参加）是固定搭配；long for（渴望）、plan for（为. ….计 划）、search for（寻找）均不符。Z"},{"n":5,"options":["touched","struck","puzzled","annoyed"],"answer":"B","answerText":"struck","explanation":"作者对有很多人花钱参加课程感到惊讶，be struck by （被. …震惊）符合语境；touched （感动的）、puzzled （困惑的）、annoyed （恼怒的）均不符"},{"n":6,"options":["avoid","deny","forget","delay"],"answer":"A","answerText":"avoid","explanation":"Mia 怀孕了，想要避免把自己的飞行恐惧传给孩子；deny （否认）、forget （忘记）、delay （推迟）均不符"},{"n":7,"options":["skills","facts","theories","news"],"answer":"B","answerText":"facts","explanation":"飞行员讲解了“飞机发动机停转仍能滑翔100英里”这类事实，让作者感到安心；skills （技能）、theories （理 论）、news （新闻）均不符"},{"n":8,"options":["latest","various","secret","strict"],"answer":"D","answerText":"strict","explanation":"飞行员强调严格的安全规则和每日超10万次的安全飞行；latest （最新的）、various （各种各样的）、secret （秘 密的）均不符"},{"n":9,"options":["assessment","behavior","psychology","communication"],"answer":"C","answerText":"psychology","explanation":"下午由医生授课，核心讲解飞行恐惧的心理学知识及应对方法；assessment （评估）、behavior （行为）、communication（交流）均不符"},{"n":10,"options":["worked","happened","varied","mattered"],"answer":"A","answerText":"worked","explanation":"作者练习了医生教的方法，且该方法起作用了；happened （发生）、varied （变化）、mattered （重要）均不符"},{"n":11,"options":["personal","normal","final","actual"],"answer":"D","answerText":"actual","explanation":"课程最后进行了实际的飞行体验，是检验学习效果的关键；personal （个人的）、normal （正常的）、final （最 后的）均不如actual 贴合语境"},{"n":12,"options":["boredom","disappointment","tension","confusion"],"answer":"C","answerText":"tension","explanation":"登机时，作者此前的兴奋变成了明显的紧张，符合其恐惧飞行的状态；boredom （无聊）、disappointment （失 望）、confusion （困惑）均不符"},{"n":13,"options":["traditional","learned","inspiring","usual"],"answer":"B","answerText":"learned","explanation":"遇到气流时，作者使用了在课程中学到的“呼吸和收缩”方法；traditional （传统的）、inspiring （鼓舞人心的）、usual （通常的）均不符"},{"n":14,"options":["show off","break down","take over","fade away"],"answer":"C","answerText":"take over","explanation":"这是作者第一次没有被恐慌掌控，take over （接管、掌控）符合语境；show off （炫耀）、break down（崩溃）、fade away （逐渐消失）均不符"},{"n":15,"options":["ahead","again","around","along"],"answer":"A","answerText":"ahead","explanation":"作者下飞机后，心跳仍在加速，心里已经迫不及待奔向在北京的女儿，ahead （向前、朝着）符合语境；again （再次）、around （周围）、along （沿着）均不符。第二节语法填空"}]}]},{"id":"2026-湛江一模","year":2026,"paperName":"湛江一模","items":[{"id":"cloze-2026-湛江一模-01","type":"cloze","no":21,"score":15,"scorePerBlank":1,"instruction":"阅读下面短文，从每题所给的A、B、C、D四个选项中选出最佳选项。","passage":"In my family, a unique holiday tradition has taken root. It is a tradition that goes beyond {{1}} gift-giving. Each year, I secretly take away a small tree-themed journal from my daughters' rooms before their birthdays or holidays, only to {{2}} it with a new page filled with my awkwardly drawn trees. These drawings symbolize {{3}} trees planted in their {{4}} through donations to One Tree Planted — an organization that helps with forests worldwide at about $1 per tree.\nWe call these journals their“forever forest”. My mission is to {{5}} this until\nthe pages overflow with trees or my time on Earth ends. This tradition carries three {{6}}: to help secure a livable climate for their future, to show how small, {{7}} actions add up to a meaningful impact, and to inspire them to create their own paths\ntoward positive {{8}} Unlike one-off charitable gifts, this {{9}} is designed to grow and resonate （回 响）across years. Though tree-planting alone cannot stop systemic deforestation, it offers something equally vital: better {{10}}. My daughters already {{11}} watching\ntheir forest expand on {{12}} —and in reality. More importantly, they're beginning to connect individual choices with broader consequences: that each of us can either {{13}} the world or carelessly degrade it.\nThis“forever forest” is not a（n） {{14}} to global crisis, but a humble, personal testament （证明）to {{15}} and hope — one tree, one page, and one child at a time.","questions":[{"n":1,"options":["serious","careful","conventional","public"],"answer":"C","answerText":"conventional","explanation":"conventional 意为“惯例的、传统的”。句意：这个传统超越了**惯例的**送礼方式。下文说作者每年偷偷拿走女儿房里的树形笔记本、再画满树送回去，而不是直接买礼物，所以是“超越惯例”。serious（严肃的）、careful（仔细的）、public（公开的）都无法与 gift-giving 构成这种对比。"},{"n":2,"options":["return","present","compare","connect"],"answer":"A","answerText":"return","explanation":"return 意为“归还、送回”。took away ... only to ___ it with a new page 构成“拿走—补一页—送回去”的完整动作链，only to 表示出乎意料的结果。present（呈献）缺少“原来拿走、现在送回”的往复含义；compare（比较）、connect（连接）与笔记本无关。"},{"n":3,"options":["big","real","thick","weak"],"answer":"B","answerText":"real","explanation":"下文提到通过捐款给 One Tree Planted 这 一 组织来种树，说明这些树是真实种 下的"},{"n":4,"options":["favor","turn","memory","name"],"answer":"D","answerText":"name","explanation":"“in one's name”在这里的意思是“以某人的名义”,家长以女儿们的名义种树，作为 送给她们的生日或节日礼物"},{"n":5,"options":["improve","advocate","continue","recognize"],"answer":"C","answerText":"continue","explanation":"“continue” 与 “until the pages overflow with trees or my time on Earth ends”相 呼 应，强调作者将这件事做下去的决心"},{"n":6,"options":["suggestions","intentions","achievements","enrichments"],"answer":"B","answerText":"intentions","explanation":"答题空后面的三个不定式表达的是家长送种树日志作为礼物的目的，所以 “intentions” 符合语境"},{"n":7,"options":["consistent","contemporary","convincing","controlled"],"answer":"A","answerText":"consistent","explanation":"consistent 意为“持续的、一贯的”。后文 how small, ___ actions add up to a meaningful impact 强调“小的行动不断累积才有效果”，consistent 正对应“持续”。contemporary（当代的）、convincing（令人信服的）、controlled（受控的）都与“累积”这一逻辑无关。"},{"n":8,"options":["feedback","change","answers","efforts"],"answer":"B","answerText":"change","explanation":"change 意为“改变”。positive change 是英语固定搭配，且与全文“种树环保、给未来带来积极改变”的主旨一致。feedback（反馈）需要有他人给出，answers（答案）与 paths toward 不搭，efforts（努力）与 positive 连用不自然。"},{"n":9,"options":["topic","agreement","practice","principle"],"answer":"C","answerText":"practice","explanation":"答题空前的“this” 指代上文描述的种树日志传统。“practice” 能准确描述这持续多 年的行为"},{"n":10,"options":["productiveness","fairness","business","awareness"],"answer":"D","answerText":"awareness","explanation":"下文提到女儿们“connect individual choices with broader consequences”,即“将个 人选择与更广泛的结果联系起来” ,“awareness” 在这里指“意识”,即“意识提高”"},{"n":11,"options":["enjoy","avoid","miss","mind"],"answer":"A","answerText":"enjoy","explanation":"这里的意思是“女儿们已经乐于看到她们的森林扩大”。“enjoy” 表示她们喜欢这样 的礼物，明白其中的意义"},{"n":12,"options":["paper","screen","holiday","command"],"answer":"A","answerText":"paper","explanation":"“on paper”意为“在纸上”,与下文的“in reality”形成对照，指纸上画的树，实际都种 下 了"},{"n":13,"options":["depend on","engage with","care for","struggle against"],"answer":"C","answerText":"care for","explanation":"“or” 前 后 为 对 立 关 系，“care for”与 “degrade” 形成鲜明对比，表示两种截然不同的 选择"},{"n":14,"options":["response","access","devotion","solution"],"answer":"D","answerText":"solution","explanation":"“solution” 与 下 文“humble, personal testament”形成对比，适用于“not…but …” 结 构，阐述种树日志这样的小事情的独特意义。英语参考答案及评分标准 第 3 页 （共 6 页）"},{"n":15,"options":["stability","responsibility","ability","flexibility"],"answer":"B","answerText":"responsibility","explanation":"与“hope” 并列的应是一个积极名词。“responsibility” 与全文“个人行动”“积累影 响”的主题一致。第二节 （共10小题；每小题1.5分，满分15分） 36.convenience 37.but 38.has reached 39.spots 40.basic 41.equipped 42.drinking 43.a 44.currently 45.in 第三部分 写作（共两节，满分40分） 第一节 （满分15分） One possible version"}]}]},{"id":"2025-national-1","year":2025,"paperName":"全国一卷（新课标Ⅰ）","items":[{"id":"cloze-2025-national-1-01","type":"cloze","no":38,"score":15,"scorePerBlank":1,"instruction":"阅读下面短文，从每题所给的A、B、C、D四个选项中选出最佳选项。","passage":"One August afternoon, I sat in my kitchen staring at a glass vase that hadn’t seen daylight since my wedding.\nMy husband and I had just sold our house and we were busy {{1}} the beloved home our family had spent 23 years filling up. We had decided on key items for the {{2}} we were moving to in town, donated what we could, and rented a place to {{3}} our supposedly important objects. That left a house still {{4}} with things that, while not particularly {{5}}, didn’t belong in a landfill （垃圾填埋场）.\nI took a picture of the vase and posted it online, for $10. A couple of messages came in, one wanting additional {{6}}, another asking for a price cut. As our {{7}} day drew near, I settled on a new price （$0） and reposted it. The {{8}}: “I hate this vase. Maybe you won’t.” In an instant, a woman raced into my house and left happily with the vase.\n{{9}}, I posted more. My daily posts and the {{10}} I received became a precious ray of light in the chaos of my house. Each exchange provided a chance to {{11}} the landfill and to please another person I might not otherwise have {{12}}.\nI sit in my apartment today, loving each of the {{13}} that share our small space. I take {{14}} in knowing that, somewhere nearby, someone is {{15}} something that couldn’t come with us.","questions":[{"n":1,"options":["painting over","looking around","emptying out","pulling down"],"answer":"C","answerText":"emptying out","explanation":"考查动词短语辨析。句意：我和丈夫刚刚卖掉了我们的房子，我们正忙着清空我们一家人花了 23 年时间建造的心爱的房子。A. painting over 粉刷覆盖；B. looking around 环顾四周；C. emptying out 清空；D. pulling down 拆除。根据上文 “ My husband and I had just sold our house” 和下文 “the beloved home our family had spent 23 years filling up” 可推知，此处指作者卖掉了房子，忙着清空房子里的多年来堆积的东西。故选 C。"},{"n":2,"options":["hotel","office","cottage","apartment"],"answer":"D","answerText":"apartment","explanation":"考查名词词义辨析。句意：我们已经为即将搬到城里的公寓选定了关键物品，尽可能捐赠了能捐的东西，并租了一个地方来存放我们自认为重要的物品。A. hotel 酒店；B. office 办公室；C. cottage 小屋；D. apartment 公寓。根据文章最后一段 “I sit in my apartment today” 可推知，此处指作者一家人搬到了公寓。故选 D。"},{"n":3,"options":["store","display","sell","repair"],"answer":"A","answerText":"store","explanation":"考查动词词义辨析。句意：我们已经为即将搬到城里的公寓选定了关键物品，尽可能捐赠了能捐的东西，并租了一个地方来存放我们自认为重要的物品。A. store 储存；B. display 展示；C. sell 出售；D. repair 修理。根据上文 “rented a place” 以及下文 “our supposedly important objects” 可推知，此处指租地方是为了存放重要物品。故选 A。"},{"n":4,"options":["covered","decorated","stuffed","equipped"],"answer":"C","answerText":"stuffed","explanation":"考查形容词词义辨析。句意：这使得房子里仍然堆满了那些虽然不是特别值钱，但不应该放在垃圾填埋场的东西。A. covered 覆盖的；B. decorated 装饰的；C. stuffed 塞满的；D. equipped 配备的。根据上文 “rented a place to 3 our supposedly important objects” 以及下文 “with things” 可推知，此处指房子里仍塞满物品。故选 C。"},{"n":5,"options":["conventional","valuable","complicated","tolerable"],"answer":"B","answerText":"valuable","explanation":"考查形容词词义辨析。句意：这使得房子里仍然堆满了那些虽然不是特别值钱，但不应该放在垃圾填埋场的东西。A. conventional 传统的；B. valuable 有价值的；C. complicated 复杂的；D. tolerable 可容忍的。根据上文 “while not particularly” 以及下文 “didn’t belong in a landfill” 可推知，此处指虽不贵重但不应丢弃的物品。故选 B。"},{"n":6,"options":["fees","photos","receipts","models"],"answer":"B","answerText":"photos","explanation":"考查名词词义辨析。句意：有几条信息进来了，一条想要更多的照片，另一条请求降价。A. fees 费用；B. photos 照片；C. receipts 收据；D. models 模型。根据上文 “I took a picture of the vase” 及 “additional” 可推知，此处指有人索要更多照片。故选 B。"},{"n":7,"options":["move","pay","market","work"],"answer":"A","answerText":"move","explanation":"考查名词词义辨析。句意：随着搬家日的临近，我确定了一个新的价格（0 美元）并重新发布了它。A. move 搬家；B. pay 支付；C. market 市场；D. work 工作。根据前文搬家背景及下文 “day drew near” 可推知，此处指搬家日临近。故选 A。"},{"n":8,"options":["warning","request","desc_ription","reply"],"answer":"C","answerText":"desc_ription","explanation":"考查名词词义辨析。句意：描述：“ 我讨厌这个花瓶。也许你不会。” A. warning 警告；B. request 请求；C. description 描述；D. reply 回复。根据上文 “I took a picture of the vase and posted it online” 以及下文 “I hate this vase. Maybe you won’t.” 可推知，此处指是重新发布的对花瓶的描述。故选 C。"},{"n":9,"options":["Confused","Interested","Disappointed","Encouraged"],"answer":"D","answerText":"Encouraged","explanation":"考查形容词词义辨析。句意：受到鼓励，我发布了更多。A. Confused 困惑的；B. Interested 感兴趣的；C. Disappointed 失望的；D. Encouraged 受鼓励的。根据上文 “In an instant, a woman raced into my house and left happily with the vase.” 以及作者后文持续发帖的行为，可推知，此处指作者受到鼓舞。故选 D。"},{"n":10,"options":["visits","reports","advice","money"],"answer":"A","answerText":"visits","explanation":"考查名词词义辨析。句意：我每天收到的帖子和来我家里的拜访，在我混乱的房子里变成了一束珍贵的光芒。A. visits 拜访；B. reports 报告；C. advice 建议；D. money 钱。根据上文 “In an instant, a woman raced into my house” 以及 “My daily posts” 和后文的互动，可推知，此处指去作者家里拜访。故选 A。"},{"n":11,"options":["remove","spare","find","check"],"answer":"B","answerText":"spare","explanation":"考查动词词义辨析。句意：每一次交换都提供了一个避免垃圾填埋的机会，也让我得以取悦另一个原本可能不会遇到的人。A. remove 移除；B. spare 省得；免去；C. find 发现；D. check 检查。根据上文语境以及下文 “the landfill” 可推知，此处指作者用免费赠送旧物来代替丢掉旧物垃圾填埋，此处 spare 引申为 “ 免去 ” 表示免得去垃圾填埋场丢东西。故选 B。"},{"n":12,"options":["investigated","recognized","encountered","recommended"],"answer":"C","answerText":"encountered","explanation":"考查动词词义辨析。句意：每一次交换都提供了一个避免垃圾填埋的机会，也让我得以取悦另一个原本可能不会遇到的人。A. investigated 调查；B. recognized 认出；C. encountered 遇见；D. recommended 推荐。根据上文 “another person I might not otherwise” 可推知，此处指免费赠送旧物让原本不会遇见的人感到高兴。故选 C。"},{"n":13,"options":["giveaways","posts","contributions","belongings"],"answer":"D","answerText":"belongings","explanation":"考查名词词义辨析。句意：今天我坐在我的公寓里，爱着我们小空间里的每一件所有物。A. giveaways 赠品；B. posts 帖子；C. contributions 贡献；D. belongings 所有物。结合语境，再根据上文 “I sit in my apartment today” 以及下文 “share our small space” 可推知，此处指现在拥有的物品。故选 D。"},{"n":14,"options":["joy","part","care","time"],"answer":"A","answerText":"joy","explanation":"考查名词词义辨析。句意：知道就在附近的某个地方，有人正在欣赏着这件无法随我们一起走的东西，我感到很快乐。A. joy 快乐；B. part 部分；C. care 关心；D. time 时间。结合语境，再根据上文 “loving each of the 13 that share our small space.” 以及下文 “in knowing that, somewhere nearby” 可推知，此处指作者免费赠送旧物，也从中获得了快乐。故选 A。"},{"n":15,"options":["anticipating","appreciating","delivering","withdrawing"],"answer":"B","answerText":"appreciating","explanation":"考查动词词义辨析。句意：知道就在附近的某个地方，有人正在欣赏着这件无法随我们一起走的东西，我感到很快乐。A. anticipating 期待；B. appreciating 欣赏；C. delivering 递送；D. withdrawing 撤回。根据上文 “I take 13 in knowing that, somewhere nearby” 以及下文 “something that couldn’t come with us” 可推知，此处指他人在欣赏这些作者带不走的，赠予的物品。故选 B。"}]}]},{"id":"2025-national-2","year":2025,"paperName":"全国二卷","items":[{"type":"cloze","no":26,"scorePerBlank":1,"instruction":"阅读下面短文，从每题所给的A、B、C、D四个选项中选出最佳选项。","passage":"Evelyn Donohue is a 65-year-old grandma. She only started to {{1}} seven years ago after having a {{2}} call. She'd been struggling with eating disorders and health issues, which {{3}} led her to getting surgery. After that experience, she knew that she needed to make a {{4}}. Determined to turn her life around, Ms Donohue began to work out and follow a {{5}} lifestyle, before discovering a {{6}} for weightlifting.\nSince setting out on the journey, the {{7}} lover has not only managed to {{8}} an impressive set of muscles — but also a huge following on social media.\nThe well-liked grandma regularly posts workout content, explaining there's no {{9}} others can't look this good. She said it was all down to some key aspects.\n“Hold on: Consider failure as a {{10}} to success and never give up. Stick to your plan, ” she said. “ {{11}} others: Lift others up on your journey. Success is sweeter when {{12}}. ” She previously explained that “you do not need to have an amazing body to exercise... the {{13}} is to feel good, not look good. ”\nMs Donohue used to be laughed at for being too old to work out, but she has proved the {{14}} wrong in the best possible way and has indeed become an {{15}} for many social media users.","questions":[{"n":1,"options":["write","travel","exercise","recover"],"answer":"C","answerText":"exercise","explanation":"后文明确提到“began to work out”(开始锻炼)和“passion for weightlifting”(对举重的热情)，因此7年前开始的是exercise(锻炼)。其他选项A.write(写作)、B.travel(旅行)、D.recover(恢复)均不符合上下文。故选C。"},{"n":2,"options":["goodwill","timeout","long-distance","wake-up"],"answer":"D","answerText":"wake-up","explanation":"“wake-up call”是固定搭配，指“警醒事件”，与后文“经历手术后才意识到需要改变”的语境完全契合。其他选项A.goodwill(善意)、B.timeout(暂停)、C.long-distance(长途)都不符合这个语境。故选D。"},{"n":3,"options":["normally","ultimately","suddenly","automatically"],"answer":"B","answerText":"ultimately","explanation":"饮食失调和健康问题最终(ultimately)导致她接受手术，体现因果关系的递进。其他选项A.normally(通常)、C.suddenly(突然)、D.automatically(自动)都不如ultimately准确。故选B。"},{"n":4,"options":["change","fortune","wish","deal"],"answer":"A","answerText":"change","explanation":"后文“决心改变人生(turn her life around)”明确提示需要填入change(改变)。其他选项B.fortune(财富)、C.wish(愿望)、D.deal(交易)都不符合语境。故选A。"},{"n":5,"options":["risky","traditional","comfortable","healthy"],"answer":"D","answerText":"healthy","explanation":"与前文健康问题呼应，她开始遵循healthy lifestyle(健康生活方式)。其他选项A.risky(冒险的)、B.traditional(传统的)、C.comfortable(舒适的)都不如healthy贴切。故选D。"},{"n":6,"options":["demand","secret","passion","cure"],"answer":"C","answerText":"passion","explanation":"discovering a passion for...表示“发现对……的热情”，符合她爱上举重的语境。其他选项A.demand(需求)、B.secret(秘密)、D.cure(治愈)都不合适。故选C。"},{"n":7,"options":["peace","fitness","fun","nature"],"answer":"B","answerText":"fitness","explanation":"fitness lover表示“健身爱好者”，与全文主题一致。其他选项A.peace(和平)、C.fun(乐趣)、D.nature(自然)都不如fitness准确。故选B。"},{"n":8,"options":["grow","control","activate","relax"],"answer":"A","answerText":"grow","explanation":"grow muscles表示“增长肌肉”，是常见搭配。其他选项B.control(控制)、C.activate(激活)、D.relax(放松)都不如grow准确。故选A。"},{"n":9,"options":["need","choice","reason","difference"],"answer":"C","answerText":"reason","explanation":"there's no reason表示“没有理由”，完整句意为“没有理由别人不能看起来这么好”。其他选项A.need(需要)、B.choice(选择)、D.difference(区别)都不符合。故选C。"},{"n":10,"options":["green light","road block","passing mark","stepping stone"],"answer":"D","answerText":"stepping stone","explanation":"stepping stone to success表示“通往成功的垫脚石”，符合“把失败视为成功之母”的语境。其他选项A.green light(绿灯)、B.road block(路障)、C.passing mark(及格线)都不合适。故选D。"},{"n":11,"options":["Help","Consult","Follow","Forgive"],"answer":"A","answerText":"Help","explanation":"后文“Lift others up”(帮助他人提升)明确提示应选Help(帮助)。其他选项B.Consult(咨询)、C.Follow(跟随)、D.Forgive(原谅)都不符合。故选A。"},{"n":12,"options":["accepted","shared","expected","celebrated"],"answer":"B","answerText":"shared","explanation":"success is sweeter when shared表示“成功在被分享时更甜蜜”，是常见表达。其他选项A.accepted(接受)、C.expected(期待)、D.celebrated(庆祝)都不如shared贴切。故选B。"},{"n":13,"options":["goal","case","duty","cost"],"answer":"A","answerText":"goal","explanation":"the goal is to...表示“目标是……”，符合“感觉良好而非看起来好”的表述。其他选项B.case(情况)、C.duty(责任)、D.cost(代价)都不合适。故选A。"},{"n":14,"options":["instructors","admirers","beginners","doubters"],"answer":"D","answerText":"doubters","explanation":"prove the doubters wrong表示“证明怀疑者是错的”，与前文“被嘲笑太老”呼应。其他选项A.instructors(教练)、B.admirers(崇拜者)、C.beginners(初学者)都不符合。故选D。"},{"n":15,"options":["authority","excuse","inspiration","option"],"answer":"C","answerText":"inspiration","explanation":"become an inspiration表示“成为激励他人的榜样”，符合她激励社交媒体用户的语境。其他选项A.authority(权威)、B.excuse(借口)、D.option(选择)都不合适。故选C。"}],"score":15,"id":"cloze-2025-national-2-01"},{"type":"grammar-fill","no":27,"scorePerBlank":1.5,"instruction":"阅读下面短文，在空白处填入1个适当的单词或括号内单词的正确形式。","passage":"I was born and raised in Cleveland, Ohio in the United States. Yet now, I live in the countryside of Zhejiang, China with my Chinese husband and his family. {{1}} Bamboo and tea bushes（灌木）grow wild in the mountains, chickens are always free-range, and {{2}} heating doesn't exist.\nNothing in my life before prepared me {{3}} this-one to be sure, the first time I came here I never imagined I would ever feel comfortable in this area. But it's amazing how you can adapt {{4}} learn in a new environment. Over time, I've found {{5}} feeling extremely at home here. And in the process, I've experienced things that really surprise me at times. The \" sunshine scent（香味）\" of freshly sunned clothes {{6}} one of them.\nGrowing up, my family and our neighbors never used clotheslines to dry clothing, denying me the chance {{7}} one of the great wonders of sunshine — the sweet \" sunshine scent\" after sunning clothes for an entire day.\nThe sun-dried clothes smell especially pleasant where I live, thanks to the {{8}} of smog and plenty of blue sky {{9}} with lots of fresh air.\nIf you've never experienced the \" sunshine scent\" from a sheet or shirt {{10}} to sun for a day, well, you're missing out on one of life's wonders.","questions":[{"n":1,"hint":null,"answer":"where","answerText":"where","explanation":"此处需要关系副词引导定语从句，修饰“the countryside of Zhejiang”。从句“bamboo and tea bushes grow wild...”描述乡村的自然环境，因此用“where”表示地点。故填where。"},{"n":2,"hint":"center","answer":"central","answerText":"central","explanation":"此处修饰名词“heating”，需用形容词形式。“central heating”（集中供暖）是固定搭配，与后文“doesn't exist”（不存在）构成完整语义。故填central。"},{"n":3,"hint":null,"answer":"for","answerText":"for","explanation":"“prepare sb. for sth.”是固定搭配，意为“使某人准备好应对某事”。句意为“我过去的生活从未让我为现在的生活做好准备”。故填for。"},{"n":4,"hint":null,"answer":"and","answerText":"and","explanation":"此处连接两个并列动词“adapt”（适应）和“learn”（学习），需用并列连词“and”。句意强调“在新环境中适应并学习”的能力。故填and。"},{"n":5,"hint":"I","answer":"myself","answerText":"myself","explanation":"动词“found”后接反身代词作宾语，表示“发现自己处于某种状态”。“find oneself doing/adj.”是常见结构，此处指“我发现自己在这里感到非常自在”。故填myself。"},{"n":6,"hint":"be","answer":"is","answerText":"is","explanation":"主语为单数名词短语“The sunshine scent...”，且全文使用现在时态，因此用“is”。句意为“阳光晒过的衣服的'阳光香味'就是其中之一”。故填is。"},{"n":7,"hint":"discover","answer":"to discover","answerText":"to discover","explanation":"“the chance to do sth.”是固定搭配，表示“做某事的机会”。此处指“（过去）没有机会发现阳光的神奇之处”。故填to discover。"},{"n":8,"hint":"absence","answer":"absence","answerText":"absence","explanation":"介词“thanks to”后需接名词，且“the absence of smog”（没有雾霾）与后文“plenty of blue sky”（蓝天）构成因果关系。故填absence。"},{"n":9,"hint":"afternoon","answer":"afternoons","answerText":"afternoons","explanation":"此处需复数名词表示“许多个下午”，与“lots of fresh air”（大量新鲜空气）并列，共同描述当地环境特点。故填afternoons。"},{"n":10,"hint":"leave","answer":"left","answerText":"left","explanation":"过去分词“left”作后置定语，表被动，相当于“which is left”。句意为“被晾晒一天的床单或衬衫散发的'阳光香味'”。故填left。"}],"score":15,"id":"grammar-2025-national-2-01"}]},{"id":"2025-zhejiang-jan","year":2025,"paperName":"浙江首考","items":[{"id":"cloze-2025-zhejiang-jan-01","type":"cloze","no":41,"score":15,"scorePerBlank":1,"instruction":"阅读下面短文，从每题所给的A、B、C、D四个选项中选出最佳选项。","passage":"Manuela Ribeiro has a healthy addiction. It’s {{1}}. A few months ago, the 30-year-old teacher decided it was time to put her {{2}} to good use. She signed up on the website Bookalokal, and now welcomes {{3}} into her Brussels flat twice a week for dinner parties.\nRibeiro {{4}} €35 per person for what is usually a three-course meal that can last up to three hours. For Ribeiro, it has become a perfect platform for {{5}} her hobby of buying food, {{6}} new recipes and holding dinner parties.\n“It’s a great opportunity to share my passion for food and to {{7}} new people,” said Ribeiro. Sometimes she prepares traditional Brazilian dishes {{8}} her native home; other times she {{9}} dinner courses with her favorite beers.\nThe platform has enabled Ribeiro to realise her dream with a great deal of freedom, as {{10}} to a restaurant where the service is {{11}}, the menu is known in advance, and the meal is expected to be no {{12}}.\n“But it’s also a great {{13}}, for it can sometimes take days to {{14}} a single event,” Ribeiro said. “This platform is not only {{15}} for professional cooks, but also for those willing to discover new experiences.”","questions":[{"n":1,"options":["reading","traveling","cooking","teaching"],"answer":"C","answerText":"cooking","explanation":"考查名词词义辨析：句意：Manuela Ribeiro 有一种健康的癖好。那就是烹饪。A. reading 阅读；B. traveling 旅行；C. cooking 烹饪；D. teaching 教学。根据下文 “She signed up on the website Bookalokal, and now welcomes 3 into her Brussels flat twice a week for dinner parties” 可知，她现在在 Bookalokal 网站上提供晚餐聚会服务，由此推知她的嗜好是烹饪。故选 C。"},{"n":2,"options":["hobby","energy","education","money"],"answer":"A","answerText":"hobby","explanation":"考查名词词义辨析：句意：几个月前，这位 30 岁的老师决定是时候好好利用她的爱好了。A. hobby 爱好；B. energy 精力；C. education 教育；D. money 钱。根据上文 “Manuela Ribeiro has a healthy addiction. It’s 1.” 可知，她的爱好是烹饪，此处指好好利用她的烹饪爱好。故选 A。"},{"n":3,"options":["coworkers","students","relatives","strangers"],"answer":"D","answerText":"strangers","explanation":"考查名词词义辨析：句意：她在 Bookalokal 网站上注册了，现在每周两次欢迎陌生人到她布鲁塞尔的公寓来参加晚宴。A. coworkers 同事；B. students 学生；C. relatives 亲戚；D. strangers 陌生人。根据下文 “It’s a great opportunity to share my passion for food and to 7 new people” 可知，这是一个分享她对食物的热爱和结识新朋友的好机会，由此推知她欢迎陌生人到她的公寓参加晚宴。故选 D。"},{"n":4,"options":["pays","charges","owes","raises"],"answer":"B","answerText":"charges","explanation":"考查动词词义辨析：句意：对于通常一顿可能持续长达三个小时的三道菜的晚餐，Ribeiro 向每人收取 35 欧元。A. pays 支付；B. charges 收费；C. owes 欠；D. raises 提高，筹集。根据下文 “€35 per person for what is usually a three-course meal” 可知，这是 Manuela Ribeiro 为客人提供的晚餐的收费标准，即每人收费 35 欧元。故选 B。"},{"n":5,"options":["pursuing","choosing","discussing","changing"],"answer":"A","answerText":"pursuing","explanation":"考查动词词义辨析：句意：对 Ribeiro 来说，这已经成为她追求购买食材、尝试新食谱以及举办晚宴这些爱好的一个完美平台。A. pursuing 追求；B. choosing 选择；C. discussing 讨论；D. changing 改变。根据上文 “Manuela Ribeiro has a healthy addiction. It’s 1.” 可知，Manuela Ribeiro 热爱烹饪，所以此处想表达的是 “ 追求她购买食材的爱好 ”。故选 A。"},{"n":6,"options":["passing on","trying out","going over","taking down"],"answer":"B","answerText":"trying out","explanation":"考查动词短语辨析：句意：对 Ribeiro 来说，这已经成为她追求购买食材、尝试新食谱以及举办晚宴这些爱好的一个完美平台。A. passing on 传递；B. trying out 尝试；C. going over 复习；D. taking down 记下。根据下文 “new recipes” 可知，此处表示尝试新食谱。故选 B。"},{"n":7,"options":["hire","help","meet","train"],"answer":"C","answerText":"meet","explanation":"考查动词词义辨析：句意：“ 这是一个分享我对食物的热情以及结识新朋友的好机会。” Ribeiro 说。A. hire 雇佣；B. help 帮助；C. meet 遇见，结识；D. train 训练。根据下文 “This platform is not only 15 for professional cooks, but also for those willing to discover new experiences.” 可知，这个平台不仅适合专业厨师，也适合那些愿意探索新体验的人，由此可推测出 Manuela Ribeiro 通过这个平台可以认识新朋友。故选 C。"},{"n":8,"options":["in addition to","in return for","in honor of","in line with"],"answer":"C","answerText":"in honor of","explanation":"考查介词短语辨析。句意：有时她准备传统的巴西菜肴，以纪念她的祖国；有时她会用她最喜欢的啤酒搭配晚餐。A. in addition to 除 …… 外（还）；B. in return for 作为 …… 的回报；C. in honor of 为了纪念；D. in line with 符合。根据下文 “her native home” 以及语境可知，为了纪念她的祖国，Ribeiro 会准备传统的巴西菜肴。故选 C。"},{"n":9,"options":["replaces","tastes","orders","pairs"],"answer":"D","answerText":"pairs","explanation":"考查动词词义辨析：句意：有时她会按照她的家乡巴西的传统准备传统的巴西菜肴；有时她会把晚餐菜肴和她最喜欢的啤酒搭配起来。A. replaces 代替；B. tastes 品尝；C. orders 订购；D. pairs 配对，搭配。根据下文 “dinner courses with her favorite beers” 可知，此处表示用 Ribeiro 最喜欢的啤酒搭配晚餐。故选 D。"},{"n":10,"options":["opposed","related","subject","vital"],"answer":"A","answerText":"opposed","explanation":"考查形容词词义辨析：句意：这个平台让 Ribeiro 能够非常自由地实现她的梦想，与餐馆形成对比，在餐馆里服务是没有人情味的，菜单是提前知道的，而且人们期望用餐过程中没有惊喜。A. opposed 相反的，对立的；B. related 相关的；C. subject 受 …… 支配的；D. vital 至关重要的。根据下文 “to a restaurant where the service is” 可知，此处是将在平台上做饭和开餐厅进行对比，表示两者是相反的。故选 A。"},{"n":11,"options":["invaluable","impersonal","unsuitable","unprofessional"],"answer":"B","answerText":"impersonal","explanation":"考查形容词词义辨析：句意：这个平台让 Ribeiro 能够非常自由地实现她的梦想，与餐馆形成对比，在餐馆里服务是没有人情味的，菜单是提前知道的，而且人们期望用餐过程中没有惊喜。A. invaluable 无价的；B. impersonal 没有人情味的；C. unsuitable 不合适的；D. unprofessional 不专业的。根据下文 “the menu is known in advance, and the meal is expected to be no 12 ” 可知，菜单是提前知道的，而且饭菜没有什么惊喜，说明餐厅的服务是没有人情味的。故选 B。"},{"n":12,"options":["surprise","end","need","problem"],"answer":"A","answerText":"surprise","explanation":"考查名词词义辨析：句意：这个平台让 Ribeiro 能够非常自由地实现她的梦想，与餐馆形成对比，在餐馆里服务是没有人情味的，菜单是提前知道的，而且人们期望用餐过程中没有惊喜。A. surprise 惊喜；B. end 结束；C. need 需要；D. problem 问题。根据上文 “the menu is known in advance” 可知，菜单是提前知道的，由此推知饭菜没有什么惊喜。故选 A。"},{"n":13,"options":["lesson","pleasure","success","challenge"],"answer":"D","answerText":"challenge","explanation":"考查名词词义辨析：句意：“ 但这也是一个很大的挑战，因为有时组织一场活动可能需要好几天的时间。” Ribeiro 说。A. lesson 教训；B. pleasure 快乐；C. success 成功；D. challenge 挑战。根据下文 “it can sometimes take days to 14 a single event” 可知，有时组织一个活动可能需要几天的时间，这是一件具有挑战性的事情。故选 D。"},{"n":14,"options":["celebrate","record","attend","organise"],"answer":"D","answerText":"organise","explanation":"考查动词词义辨析：句意：“ 但这也是一个很大的挑战，因为有时组织一场活动可能需要好几天的时间。” Ribeiro 说。A. celebrate 庆祝；B. record 记录；C. attend 参加；D. organise 组织。根据下文 “a single event” 可知，此处指组织一个活动。故选 D。"},{"n":15,"options":["selected","reserved","evaluated","requested"],"answer":"B","answerText":"reserved","explanation":"考查动词词义辨析：句意：“ 这个平台不仅是为专业厨师保留的，也是为那些愿意发现新体验的人准备的。” A. selected 选择；B. reserved 保留；C. evaluated 评估；D. requested 请求。根据下文 “for professional cooks, but also for those willing to discover new experiences” 可知，这个平台不仅为专业厨师保留，而且也为那些愿意发现新体验的人保留，应用 be reserved for。故选 B。"}]}]},{"id":"2024-national-1","year":2024,"paperName":"新课标Ⅰ卷","items":[{"id":"cloze-2024-national-1-01","type":"cloze","no":41,"score":15,"scorePerBlank":1,"instruction":"阅读下面短文，从每题所给的A、B、C、D四个选项中选出最佳选项。","passage":"I’ve been motivated — and demotivated — by other folks’ achievements all my life.\nWhen I was a teenager, a neighborhood friend {{1}} a marathon race. Feeling motivated, I started running {{2}}, but then two things happened. First, a girl I met one day told me she was {{3}} for a “super,” referring to a 52.4-mile double marathon. Then, the next day I went on my longest run — 15 miles. To be honest, I {{4}} it! Between the girl making my {{5}} seem small and the pure boredom of jogging, I decided that the only {{6}} I’d ever run again is if a big dog was running after me!\nSo I {{7}} cycling. I got a good bike and rode a lot. I {{8}} of entering cycle races until I flew to San Diego to visit my sister. While she was at work one day, I {{9}} her bike and went for a ride. The {{10}}: The roads there went through large valleys where I’d be riding uphill for miles at a time. I’d never faced such {{11}}. That day, I got {{12}} by about 100 “local” bikers who were used to such roads. When I got back home, suddenly riding my bike didn’t seem quite as {{13}}.\nI’ve {{14}} a lot since then. I’ve come to accept that whatever {{15}} I set for myself, they just have to be my own.","questions":[{"n":1,"options":["knew","held","won","quit"],"answer":"C","answerText":"won","explanation":"考查动词词义辨析。句意：我十几岁的时候，一个邻居朋友赢得了马拉松比赛。A. knew 知道；B. held 抓住；C. won 赢得；D. quit 退出。根据后文 “Feeling motivated” 可知，作者有了动力，所以此处应是一个邻居朋友赢得了马拉松比赛。故选 C 项。"},{"n":2,"options":["regularly","silently","proudly","recently"],"answer":"A","answerText":"regularly","explanation":"考查副词词义辨析。句意：有了动力，我开始定期跑步，但后来发生了两件事。A. regularly 有规律地；B. silently 默默地；C. proudly 自豪地；D. recently 最近。根据前文 “Feeling motivated” 可知，作者有了动力，所以应是定期跑步，符合语境。故选 A 项。"},{"n":3,"options":["asking","looking","waiting","training"],"answer":"D","answerText":"training","explanation":"考查动词词义辨析。句意：首先，有一天我遇到的一个女孩告诉我，她正在为 “ 超级 ” 马拉松训练，指的是 52.4 英里的双马拉松。A. asking 要求；B. looking 看；C. waiting 等待；D. training 训练。根据后文 “referring to a 52.4-mile double marathon” 可知，女孩要跑双马拉松，所以此处应是为之训练，符合语境。故选 D 项。"},{"n":4,"options":["made","believed","hated","deserved"],"answer":"C","answerText":"hated","explanation":"考查动词词义辨析。句意：说实话，我讨厌它!A. made 制作；B. believed 相信；C. hated 讨厌；D. deserved 值得。根据前文 “Then, the next day I went on my longest run — 15 miles.” 以及后文 “Between the girl making my 5 seem small and the pure boredom of jogging” 可知，作者最长跑了 15 miles 和女孩一比微不足道，所以是讨厌这个成绩。故选 C 项。"},{"n":5,"options":["advantage","achievement","contribution","influence"],"answer":"B","answerText":"achievement","explanation":"考查名词词义辨析。句意：在那个女孩面前，我的成就显得微不足道，再加上慢跑的无聊，我决定我再跑步的唯一理由就是有一只大狗在追我! A. advantage 优势；B. achievement 成就；C. contribution 贡献；D. influence 影响。根据前文 “Then, the next day I went on my longest run — 15 miles.” 以及后文 “seem small” 可知，作者最长跑了 15 miles，而女孩在为 52.4 miles 做训练，所以应是作者的成就微不足道。故选 B 项。"},{"n":6,"options":["way","risk","place","reason"],"answer":"D","answerText":"reason","explanation":"考查名词词义辨析。句意：在那个女孩面前，我的成就显得微不足道，再加上慢跑的无聊，我决定我再跑步的唯一理由就是有一只大狗在追我!A. way 方式；B. risk 风险；C. place 地方；D. reason 理由。根据后文 “I’d ever run again is if a big dog was running after me!” 可知，有一只大狗在追 “ 我 ”，“ 我 ” 才会再跑步，这里说的是跑步的原因。故选 D 项。"},{"n":7,"options":["gave up","went on","turned to","dealt with"],"answer":"C","answerText":"turned to","explanation":"考查动词短语辨析。句意：所以我开始骑自行车。A. gave up 放弃；B. went on 继续；C. turned to 转向；D. dealt with 处理。根据前文 “I decided that the only 6 I'd ever run again is if a big dog was running after me!” 可知，作者决定放弃跑步，所以此处应是转向骑自行车。故选 C 项。"},{"n":8,"options":["heard","dreamed","complained","approved"],"answer":"B","answerText":"dreamed","explanation":"考查动词词义辨析。句意：我梦想着参加自行车比赛，直到我飞到圣地亚哥去看我妹妹。A. heard 听到；B. dreamed 梦想；C. complained 抱怨；D. approved 批准。根据后文 “of entering cycle races” 结合选项可知，此处应是作者梦想着参加自行车比赛，符合语境。故选 B 项。"},{"n":9,"options":["painted","borrowed","bought","parked"],"answer":"B","answerText":"borrowed","explanation":"考查动词词义辨析。句意：有一天她上班的时候，我借了她的自行车去兜风。A. painted 把 …… 描绘成；B. borrowed 借；C. bought 买；D. parked 停 （车）。根据前文 “I flew to San Diego to visit my sister” 以及后文 “went for a ride” 可知，作者去看妹妹，所以要去骑行的话，应是向妹妹借自行车。故选 B 项。"},{"n":10,"options":["problem","secret","principle","advice"],"answer":"A","answerText":"problem","explanation":"考查名词词义辨析。句意：问题是：那里的道路穿过很大的山谷，我一次要骑上坡好几英里。A. problem 问题；B. secret 秘密；C. principle 原则；D. advice 建议。根据后文 “I’d be riding uphill for miles at a time. I’d never faced such 11.” 可知，作者要骑上坡好几英里，这对他来说，是一个问题。故选 A 项。"},{"n":11,"options":["dangers","events","opponents","challenges"],"answer":"D","answerText":"challenges","explanation":"考查名词词义辨析。句意：我从来没有遇到过这样的挑战。A. dangers 危险；B. events 事件；C. opponents 对手；D. challenges 挑战。根据前文 “The 10: The roads there went through large valleys where I’d be riding uphill for miles at a time.” 可知，作者要骑上坡好几英里，这对他来说是一个挑战。故选 D 项。"},{"n":12,"options":["passed","convinced","admired","stopped"],"answer":"A","answerText":"passed","explanation":"考查动词词义辨析。句意：。那天，我被大约 100 个习惯了这种道路的 “ 当地 ” 骑自行车的人超过了。A. passed 超过；B. convinced 说服；C. admired 欣赏；D. stopped 阻止。根据前文 “I’d never faced such 11.” 可知，作者骑上坡好几英里是个挑战，所以是被很多人超过。故选 A 项。"},{"n":13,"options":["reliable","convenient","familiar","appealing"],"answer":"D","answerText":"appealing","explanation":"考查形容词词义辨析。句意：当我回到家，突然骑自行车似乎不那么吸引人了。A. reliable 可信赖的；B. convenient 方便的；C. familiar 熟悉的；D. appealing 吸引人的。根据前文 “That day, I got 12 by about 100 “local” bikers who were used to such roads.” 可知，作者那天骑行被 100 多人超过，所以此时是觉得骑自行车似乎不那么吸引人了。故选 D 项。"},{"n":14,"options":["traveled","matured","missed","worried"],"answer":"B","answerText":"matured","explanation":"考查动词词义辨析。句意：从那以后我成熟了很多。A. traveled 旅行；B. matured （情感和认识） 成熟；C. missed 思念；D. worried 担心。根据后文 “I’ve come to accept that whatever 15 I set for myself, they just have to be my own.” 可知，作者不再轻易放弃，所以是成熟了很多。故选 B 项。"},{"n":15,"options":["limits","dates","goals","tests"],"answer":"C","answerText":"goals","explanation":"考查名词词义辨析。句意：我已经开始接受这样一个事实：无论我为自己设定什么目标，它们都必须是我自己的。A. limits 限制；B. dates 日期；C. goals 目标；D. tests 测试。根据后文 “I set for myself, they just have to be my own.” 可知，此处应是 “ 无论我为自己设定什么目标，它们都必须是我自己的 ”，符合语境。故选 C 项。"}]}]},{"id":"2024-national-2","year":2024,"paperName":"新课标Ⅱ卷","items":[{"id":"cloze-2024-national-2-01","type":"cloze","no":21,"score":15,"scorePerBlank":1,"instruction":"阅读下面短文，从每题所给的A、B、C、D四个选项中选出最佳选项。","passage":"When I decided to buy a house in Europe ten years ago, I didn't think too long. I liked traveling in France, but when it came to picking my favorite spot to {{1}}, Italy was the clear winner.\nDuring my first visit to Italy, I {{2}} to ask for directions or order in a restaurant. But every time I tried to {{3}} a sentence of Italian together, the locals smiled at me and {{4}} my language skills. That encouragement helped me to get through the language {{5}}. After I made Italy my permanent home, I discovered how {{6}} Italians are. Neighbors will bring me freshly made cheese and will come to my door to {{7}} me to close the window in my car when rain is coming. It's these small {{8}} of kindness that make a new country feel like home.\nAs a foodie, the way to my heart is through my stomach, and nowhere fuels my {{9}} quite like Italy. Each town has its own traditional {{10}}, and every family keeps a recipe passed from one generation to another. Families {{11}} for big meals on Sundays, birthdays, and whatever other excuses they can {{12}}. These meals are always {{13}} by laughter and joy. Whatever {{14}} life in Italy might have, the problems are {{15}} once you sit down to a big meal with friends and family.","questions":[{"n":1,"options":["study","rent","visit","settle"],"answer":"D","answerText":"settle","explanation":"考查名词词义辨析，句意：我喜欢在法国旅行，但当谈到选择我最喜欢的定居地点时，意大利显然是赢家。A. study 学习；B. rent 租金；C. visit 游览；D. settle 定居。根据下文 “After I made Italy my permanent home” 以及 “make a new country feel like home” 可推知，此处指作者最喜欢的定居地点。故选 D。"},{"n":2,"options":["planned","struggled","refused","happened"],"answer":"B","answerText":"struggled","explanation":"考查动词词义辨析，句意：在我第一次访问意大利时，我很难问路或在餐馆点餐。A. planned 计划；B. struggled 斗争、吃力地进行；C. refused 拒绝；D. happened 出现、发生。根据上文 “During my first visit to Italy” 可推知，此处指作者第一次到意大利，语言不通，很难沟通交流。故选 B。"},{"n":3,"options":["string","hang","mix","match"],"answer":"A","answerText":"string","explanation":"考查动词词义辨析，句意：我试着把一个意大利语句子串在一起，当地人对我微笑，称赞我的语言技能。A. string 串起、连成一串；B. hang 悬挂；C. mix 混合；D. match 配对。根据下文 “a sentence of Italian together” 可推知，此处指作者努力想用意大利语串成一句话。故选 A。"},{"n":4,"options":["improved","assessed","admired","praised"],"answer":"D","answerText":"praised","explanation":"考查动词词义辨析，句意：我试着把一个意大利语句子串在一起，当地人对我微笑，称赞我的语言技能。A. improved 改进；B. assessed 评估；C. admired 钦佩；D. praised 赞扬。根据上文 “the locals smiled at me” 以及下文 “That encouragement” 可推知，此处指作者尝试说意大利语，当地人赞扬作者的语言能力。故选 D。"},{"n":5,"options":["course","barrier","area","test"],"answer":"B","answerText":"barrier","explanation":"考查名词词义辨析，句意：这种鼓励帮助我克服了语言障碍。A.course 课程；B. barrier 障碍；C. area 区域；D. test 测试。根据上文 “the locals smiled at me and praised my language skills. That encouragement helped me” 可推知，此处指当地人对作者的鼓励帮助他克服了语言障碍。故选 B。"},{"n":6,"options":["open-minded","strong-willed","warm-hearted","well-informed"],"answer":"C","answerText":"warm-hearted","explanation":"考查形容词词义辨析，句意：当我把意大利作为永久的家后，我发现了意大利人是多么的热情。A. open-minded 思想开明的；B. strong-willed 思想坚定的；C. warm-hearted 热心的；D. well-informed 见多识广的。根据下文邻居的热心行为 “Neighbors will bring me freshly made cheese and will come to my door” 和 “close the window in my car when rain is coming.” 可推知，此处指邻居是热情的。故选 C。"},{"n":7,"options":["remind","allow","persuade","order"],"answer":"A","answerText":"remind","explanation":"考查动词词义辨析，句意：邻居们会给我带来新鲜的奶酪，还会在下雨的时候来我家门前提醒我关上车窗。A. remind 提醒；B. allow 允许；C. persuade 说服；D. order 命令。根据上文 “I discovered how warm-hearted Italians are” 以及下文 “will come to my door” 可推知，此处指热心的邻居在下雨的时候来作者家门前提醒他关上车窗。故选 A。"},{"n":8,"options":["tricks","promises","acts","duties"],"answer":"C","answerText":"acts","explanation":"考查名词词义辨析，句意：正是这些小小的善举让一个新国家有家的感觉。A. tricks 技巧；B. promises 承诺；C. acts 行为；D. duties 职责。根据上文 “Neighbors will bring me freshly made cheese and will come to my door to remind me to close the window in my car when rain is coming.” 可推知，此处指邻居们的善举。故选 C。"},{"n":9,"options":["ambition","success","appetite","growth"],"answer":"C","answerText":"appetite","explanation":"考查名词词义辨析，句意：作为一个美食家，通往我内心的路是通过我的胃，没有什么地方能像意大利那样刺激我的食欲。A. ambition 雄心；B. success 成功；C. appetite 食欲；D. growth 发育。根据上文 “As a foodie, the way to my heart is through my stomach” 可推知，此处指做这是一个美食家，所以应该是刺激食欲。故选 C。"},{"n":10,"options":["costume","dish","symbol","tale"],"answer":"B","answerText":"dish","explanation":"考查名词词义辨析，句意：每个城镇都有自己的传统菜肴，每个家庭都保存着代代相传的食谱。A. costume 服装；B. dish 菜肴；C. symbol 符号；D. tale 故事。根据上文 “fuels my appetite” 以及下文 “every family keeps a recipe passed from one generation to another” 可推知，此处指意大利各地都有传统菜肴。故选 B。"},{"n":11,"options":["gather","cheer","leave","wait"],"answer":"A","answerText":"gather","explanation":"考查动词词义辨析，句意：一家人在星期天、生日以及他们能想出的任何其他借口聚在一起吃大餐。A. gather 集合；B. cheer 欢呼；C. leave 留下；D. wait 等待。根据上文 “Families” 以及下文 “with friends and family” 可推知，此处指一家人聚集在一起吃饭。故选 A。"},{"n":12,"options":["put up with","stand up for","come up with","make up for"],"answer":"C","answerText":"come up with","explanation":"考查动词短语辨析，句意：一家人在星期天、生日以及他们能想出的任何其他借口聚在一起吃大餐。A. put up with 克服；B. stand up for 支持；C. come up with 想出；D. make up for 弥补。根据上文 “whatever other excuses they can” 可推知，此处指家人们为了聚在一起吃饭而想出的理由。故选 C。"},{"n":13,"options":["signaled","confirmed","represented","accompanied"],"answer":"D","answerText":"accompanied","explanation":"考查动词词义辨析，句意：这些饭菜总是伴随着笑声和喜悦。A. signaled 示意；B. confirmed 确认；C. represented 代表；D. accompanied 伴随。根据下文 “by laughter and joy” 可推知，此处指家人们在一起用餐时伴随着欢声笑语。固定搭配 “accompany by” 译为 “ 伴随 ”。故选 D。"},{"n":14,"options":["disadvantages","meanings","surprises","opportunities"],"answer":"A","answerText":"disadvantages","explanation":"考查名词词义辨析，句意：无论意大利的生活有什么缺点，一旦你和朋友和家人坐下来吃顿大餐，这些问题就会被遗忘。A. disadvantages 缺点；B. meanings 含义；C. surprises 惊喜；D. opportunities 机会。根据上文 “Whatever” 以及下文 “the problems” 可推知，此处指在意大利的生活有什么不如意之处。故选 A。"},{"n":15,"options":["created","forgotten","understood","identified"],"answer":"B","answerText":"forgotten","explanation":"考查动词词义辨析，句意：无论意大利的生活有什么缺点，一旦你和朋友和家人坐下来吃顿大餐，这些问题就会被遗忘。A. created 创建；B. forgotten 忘记；C. understood 理解；D. identified 确认。根据上文 “Whatever disadvantages life in Italy might have, the problems” 以及下文 “once you sit down to a big meal with friends and family” 可推知，此处指无论在意大利的生活有什么不如意之处，跟家人们吃一顿饭就会忘记不愉快。故选 B。"}]}]},{"id":"2023-national-1","year":2023,"paperName":"新课标Ⅰ卷","items":[{"id":"cloze-2023-national-1-01","type":"cloze","no":21,"score":15,"scorePerBlank":1,"instruction":"阅读下面短文，从每题所给的A、B、C、D四个选项中选出最佳选项。","passage":"On Oct. 11, hundreds of runners competed in a cross-country race in Minnesota. Melanie Bailey should have {{1}} the course earlier than she did. Her {{2}} came because she was carrying a {{3}} across the finish line.\nAs reported by a local newspaper, Bailey was more than two-thirds of the way through her {{4}} when a runner in front of her began crying in pain. She {{5}} to help her fellow runner, Danielle Lenoue. Bailey took her arm to see if she could walk forward with {{6}}. She couldn’t. Bailey then {{7}} to let Lenoue climb onto her back and carried her all the way to the finish line, then another 300 feet to where Lenoue could get {{8}} attention.\nOnce there, Lenoue was {{9}} and later taken to a hospital, where she learned that she had serious injuries in one of her knees. She would have struggled with extreme {{10}} to make it to that aid checkpoint without Bailey’s help.\nAs for Bailey, she is more {{11}} about why her act is considered a big {{12}}. “She was just crying. I couldn’t {{13}} her,” Bailey told the reporter. “I feel like I was just doing the right thing.”\nAlthough the two young women were strangers before the {{14}}, they’ve since become friends. Neither won the race, but the {{15}} of human kindness won the day.","questions":[{"n":1,"options":["designed","followed","changed","finished"],"answer":"D","answerText":"finished","explanation":"考查动词词义辨析。句意：Melanie Bailey 应该更早完成比赛。A. designed 设计；B. followed 跟随；C. changed 改变；D. finished 完成。根据下一段的 “carried her all the way to the finish line, then another 300 feet to where Lenoue could get ____8____ attention” 可知，Bailey 在比赛中背一名参赛者，所以完成比赛晚了，因此句子表示 “Melanie Bailey 应该更早完成比赛 ”。故选 D。"},{"n":2,"options":["delay","chance","trouble","excuse"],"answer":"A","answerText":"delay","explanation":"考查名词词义辨析。句意：她的延迟是因为她背着一名竞争对手冲过终点线。A. delay 延误；B. chance 机会；C. trouble 麻烦；D. excuse 借口。根据上文 “Melanie Bailey should have ____1____ the course earlier than she did” 和上一题的解析可知，Melanie Bailey 应该更早完成比赛，她的延迟是因为她背着一名竞争对手冲过终点线。故选 A。"},{"n":3,"options":["judge","volunteer","classmate","competitor"],"answer":"D","answerText":"competitor","explanation":"考查名词词义辨析。句意：她的延迟是因为她背着一名参赛者冲过终点线。A. judge 裁判；B. volunteer 志愿者；C. classmate 同学；D. competitor 参赛者。根据第一段的 “hundreds of runners competed in a cross-country race” 可知，她是背着一名参赛者冲过终点线。故选 D。"},{"n":4,"options":["race","school","town","training"],"answer":"A","answerText":"race","explanation":"考查名词词义辨析。句意：据当地一家报纸报道，当 Bailey 跑到比赛的三分之二多的时候，她前面的一名选手开始痛苦地哭泣。A. race 比赛；B. school 学校；C. town 城镇；D. training 训练。根据第一段的 “hundreds of runners competed in a cross-country race” 可知，此处是说 “ 当 Bailey 跑到比赛的三分之二多的时候 ”。故选 A。"},{"n":5,"options":["agreed","returned","stopped","promised"],"answer":"C","answerText":"stopped","explanation":"考查动词词义辨析。句意：她停下来帮助她的同伴 Danielle Lenoue。A. agreed 同意；B. returned 回来；C. stopped 停止；D. promised 答应。根据下文 “to help her fellow runner” 可知，她停下来帮助她的同伴 Danielle Lenoue。故选 C。"},{"n":6,"options":["courage","aid","patience","advice"],"answer":"B","answerText":"aid","explanation":"考查名词词义辨析。句意：Bailey 扶着她的胳膊，看看她能否帮助下向前走。A. courage 勇气；B. aid 帮助；C. patience 耐心；D. advice 建议。根据上文 “Bailey took her arm” 可知，此处表示看她是否能在她的帮助下向前走。故选 B。"},{"n":7,"options":["went away","stood up","stepped aside","bent down"],"answer":"D","answerText":"bent down","explanation":"考查动词短语辨析。句意：然后 Bailey 弯下腰，让 Lenoue 爬到她的背上，一路背着她走到终点线，然后又走了 300 英尺，到 Lenoue 接受治疗的地方。A. went away 离开；B. stood up 站起来；C. stepped aside 让路；D. bent down 弯腰。根据下文 “let Lenoue climb onto her back” 可知，Bailey 弯下腰，让勒诺爬到她的背上。故选 D。"},{"n":8,"options":["medical","public","constant","equal"],"answer":"A","answerText":"medical","explanation":"考查形容词词义辨析。句意：然后 Bailey 弯下腰，让 Lenoue 爬到她的背上，一路背着她走到终点线，然后又走了 300 英尺，到 Lenoue 接受治疗的地方。A. medical 医疗的；B. public 公众的；C. constant 持续不断的；D. equal 平等的。根据上文 “began crying in pain” 可知，Danielle Lenoue 很疼，所以是要接受治疗，medical attention 意为 “ 医疗救助 ”。故选 A。"},{"n":9,"options":["interrupted","assessed","identified","appreciated"],"answer":"B","answerText":"assessed","explanation":"考查动词词义辨析。句意：Lenoue 在那里接受了检查，后来被送往医院，在那里她得知自己的一个膝盖受了重伤。A. interrupted 打断；B. assessed 评估；C. identified 识别；D. appreciated 感激。根据下文 “later taken to a hospital” 可知，她是先接受了检查，再被送往医院，也就是先接受评估。故选 B。"},{"n":10,"options":["hunger","pain","cold","tiredness"],"answer":"B","answerText":"pain","explanation":"考查名词词义辨析。句意：如果没有 Bailey 的帮助，她可能会在极度的痛苦中挣扎着到达那个援助检查站。A. hunger 饥饿；B. pain 疼痛；C. cold 感冒；D. tiredness 疲劳。根据第 5 空前的 “began crying in pain” 可知，此处表示 “ 如果没有 Bailey 的帮助，她可能会在极度的痛苦中挣扎着到达那个援助检查站 ”。故选 B。"},{"n":11,"options":["worried","ashamed","confused","discouraged"],"answer":"C","answerText":"confused","explanation":"考查形容词词义辨析。句意：至于 Bailey，她更困惑的是为什么她的行为被认为是一件大事。A. worried 担心的；B. ashamed 惭愧的；C. confused 困惑的；D. discouraged 泄气的。根据下文 “I feel like I was just doing the right thing” 可知，Bailey 觉得自己只是做了正确的事情，所以她对她的行为被认为是一件大事感到困惑。故选 C。"},{"n":12,"options":["game","problem","lesson","deal"],"answer":"D","answerText":"deal","explanation":"考查名词词义辨析。句意：至于 Bailey，她更困惑的是为什么她的行为被认为是一件大事。A. game 游戏；B. problem 问题；C. lesson 课；D. deal 交易，局面。根据下文 “I feel like I was just doing the right thing” 可知，Bailey 觉得自己只是做了正确的事情，所以她对她的行为被认为是一件大事感到困惑，a big deal 意为 “ 非常重要的事 ”。故选 D。"},{"n":13,"options":["leave","cure","bother","understand"],"answer":"A","answerText":"leave","explanation":"考查动词词义辨析。句意：我不能离开她。A. leave 离开；B. cure 治愈；C. bother 打扰；D. understand 理解。根据上文 “She was just crying” 以及 Lenoue 爬到她的背上，一路背着她走到终点线，然后又走了 300 英尺。可知，Bailey 看见 Lenoue 哭喊，所以觉得不能离开她。故选 A。"},{"n":14,"options":["ride","test","meet","show"],"answer":"C","answerText":"meet","explanation":"考查名词词义辨析。句意：虽然这两个年轻女子在那场体育比赛之前是陌生人，但后来她们成了朋友。A. ride 短途旅程；B. test 测试；C. meet 体育比赛；D. show 展示。根据第一段 “hundreds of runners competed in a cross-country race” 及空前的 “the two young women were strangers before” 可知，当时是一场比赛，句子表示 “ 这两个年轻女子在那场体育比赛之前是陌生人 ”。故选 C。"},{"n":15,"options":["secret","display","benefit","exchange"],"answer":"B","answerText":"display","explanation":"考查名词词义辨析。句意：两人都没有赢得比赛，但展示出的人类善良赢得了胜利。A. secret 秘密；B. display 展示；C. benefit 利益；D. exchange 交换。根据第二段的 “let Lenoue climb onto her back and carried her all the way to the finish line, then another 300 feet to where Lenoue could get ____8____ attention” 可知，Bailey 背着一个参赛者过终点，并背她去接受检查，这展示了人类的善良，故选 B。"}]}]},{"id":"2023-national-2","year":2023,"paperName":"新课标Ⅱ卷","items":[{"id":"cloze-2023-national-2-01","type":"cloze","no":21,"score":15,"scorePerBlank":1,"instruction":"阅读下面短文，从每题所给的A、B、C、D四个选项中选出最佳选项。","passage":"In April last year, I saw a post on the PNP （Pilots N Paws） website from a family in Topeka. They had to move to Virginia but they were on a very tight {{1}}. They could not afford to pay for {{2}} for their dog, Tiffy, and {{3}} wanted to take her with them.\nIt just {{4}} that I was planning another PNP flight with another pilot, Karen, who {{5}} to take Tiffy from Kansas City to Virginia. What I was to do was fly to Topeka to {{6}} Tiffy.\nWhen I met Tiffy’s owners, they seemed very {{7}}. George, the husband, was trying to be calm, but I could tell this was {{8}} for him, having to leave his dog to a {{9}} and trust that everything would {{10}}.\nAfter some goodbyes, I asked George and his wife to help me {{11}} Tiffy into the plane. I promised to take care of Tiffy and {{12}} them as soon as we got to Kansas City.\nThe flight was {{13}}, and Tiffy was a great passenger. The next day, she {{14}} with Karen and made it back to George in Virginia within a few days. He was so {{15}} and sent me a nice e-mail with pictures. It felt great to know that I had helped bring this family together again.","questions":[{"n":1,"options":["turn","budget","schedule","connection"],"answer":"B","answerText":"budget","explanation":"考查名词词义辨析。句意：他们不得不搬到弗吉尼亚，但他们的预算非常紧张。A. turn 转折点；B. budget 预算；C. schedule 时间表；D. connection 联系。根据 “They could not afford to pay for ___2___ for their dog, Tiffy,” 可知，这个家庭的预算非常紧张。故选 B。"},{"n":2,"options":["food","shelter","medicine","transportation"],"answer":"D","answerText":"transportation","explanation":"考查名词词义辨析。句意：他们付不起他们的狗 Tiffy 的交通费，又非常想带她一起走。A. food 食物；B. shelter 庇护；C. medicine 药；D. transportation 交通。根据 “They had to move to Virginia but they were on a very tight ___1___.” 及下文可知，这个家庭的预算非常紧张，所以付不起他们的狗 Tiffy 的交通费。故选 D。"},{"n":3,"options":["desperately","temporarily","secretly","originally"],"answer":"A","answerText":"desperately","explanation":"考查副词词义辨析。句意：他们付不起他们的狗 Tiffy 的交通费，又非常想带她一起走。A. desperately 非常、拼命地；B. temporarily 暂时地；C. secretly 秘密地；D. originally 起初。根据 “wanted to take her with them.” 可知，这家人非常想把狗一起带走。故选 A。"},{"n":4,"options":["appeared","proved","happened","showed"],"answer":"C","answerText":"happened","explanation":"考查动词词义辨析。句意：碰巧我和另一名飞行员 Karen 正在计划另一次 PNP 飞行，他主动提出要把 Tiffy 从堪萨斯城带到弗吉尼亚。A. appeared 出现；B. proved 证明；C. happened 碰巧；D. showed 展示。根据 “I was planning another PNP flight with another pilot, Karen,” 可知，碰巧的是作者和另一名飞行员正在计划另一次 PNP 飞行。故选 C。"},{"n":5,"options":["waited","offered","hurried","failed"],"answer":"B","answerText":"offered","explanation":"考查动词词义辨析。句意：碰巧我和另一名飞行员 Karen 正在计划另一次 PNP 飞行，他主动提出要把 Tiffy 从堪萨斯城带到弗吉尼亚。A. waited 等待；B. offered 提供、主动提出；C. hurried 匆忙；D. failed 失败。根据 “to take Tiffy from Kansas City to Virginia.” 可知，Karen 主动提出帮忙把狗 Tiffy 从堪萨斯城带到弗吉尼亚。故选 B。"},{"n":6,"options":["see off","look for","hand over","pick up"],"answer":"D","answerText":"pick up","explanation":"考查动词短语辨析。句意：我要做的就是飞到托皮卡去接 Tiffy。A. see off 为 …… 送行；B. look for 寻找；C. hand over 移交；D. pick up 接载。根据 “What I was to do was fly to Topeka” 和常识可知，作者需要飞到托皮卡去接 Tiffy。故选 D。"},{"n":7,"options":["confused","nervous","annoyed","curious"],"answer":"B","answerText":"nervous","explanation":"考查形容词词义辨析。句意：当我见到 Tiffy 的主人时，他们看起来很紧张。A. confused 困惑的；B. nervous 紧张的；C. annoyed 恼怒的；D. curious 好奇的。根据 “George, the husband, was trying to be calm, but I could tell this was ___8___ for him, having to leave his dog to a ___9___ and trust that everything would ___10___.” 可知，这家人看起来有点紧张和不安。故选 B。"},{"n":8,"options":["hard","fine","common","lucky"],"answer":"A","answerText":"hard","explanation":"考查形容词词义辨析。句意：丈夫 George 试着冷静下来，但我看得出来，这对他来说很难，他不得不把狗留给一个陌生人，并相信一切都会解决的。A. hard 困难的；B. fine 好的；C. common 常见的；D. lucky 幸运的。根据上文 “was trying to be calm” 以及下文 “having to leave his dog to a ___9___ and trust that everything would ___10___.” 可推知，此处指把狗留给一个陌生人对主人来说很难。故选 A。"},{"n":9,"options":["coworker","passenger","stranger","neighbor"],"answer":"C","answerText":"stranger","explanation":"考查名词词义辨析。句意：丈夫 George 试着冷静下来，但我看得出来，这对他来说很难，他不得不把狗留给一个陌生人，并相信一切都会解决的。A. coworker 合作者；B. passenger 乘客；C. stranger 陌生人；D. neighbor 邻居。根据 “George, the husband, was trying to be calm, but I could tell this was ___8___ for him,” 可知，要把狗留给一个陌生人。故选 C。"},{"n":10,"options":["speed up","work out","come back","take off"],"answer":"B","answerText":"work out","explanation":"考查动词短语辨析。句意：丈夫 George 试着冷静下来，但我看得出来，这对他来说很难，他不得不把狗留给一个陌生人，并相信一切都会解决的。A. speed up 加速；B. work out 解决；C. come back 回来；D. take off 起飞。根据 “George, the husband, was trying to be calm, but I could tell this was ___8___ for him,” 可知，让狗的主人 George 相信一个陌生人一切都会解决好，对他来说很难。故选 B。"},{"n":11,"options":["feed","follow","change","load"],"answer":"D","answerText":"load","explanation":"考查动词词义辨析。句意：道别之后，我让 George 和他的妻子帮我把 Tiffy 送上飞机。A. feed 喂养；B. follow 跟随；C. change 改变；D. load 装载。load into 装入。根据 “Tiffy into the plane.” 可知，作者让 George 和他的妻子帮忙把 Tiffy 装入飞机。故选 D。"},{"n":12,"options":["call","join","leave","serve"],"answer":"A","answerText":"call","explanation":"考查动词词义辨析。句意：我答应过会照顾好 Tiffy，一到堪萨斯城就给他们打电话。A. call 打电话；B. join 加入；C. leave 离开；D. serve 服务。根据 “as soon as we got to Kansas City.” 可知，作者承诺一到堪萨斯城就给他们打电话。故选 A。"},{"n":13,"options":["unnecessary","unexpected","unavoidable","uneventful"],"answer":"D","answerText":"uneventful","explanation":"考查形容词词义辨析。句意：这次飞行平安无事，Tiffy 是个很棒的乘客。A. unnecessary 没有必要的；B. unexpected 意想不到的；C. unavoidable 不可避免的；D. uneventful 太平无事的。根据 “and Tiffy was a great passenger.” 可知，这次飞行一切都平安无事。故选 D。"},{"n":14,"options":["returned","fought","flew","agreed"],"answer":"C","answerText":"flew","explanation":"考查动词词义辨析。句意：第二天，她和 Karen 一起坐飞机，几天后就回到了弗吉尼亚州的 George 那里。A. returned 返回；B. fought 打仗；C. flew 飞；D. agreed 同意。根据 “It just ___4___ that I was planning another PNP flight with another pilot, Karen, who ___5___ to take Tiffy from Kansas City to Virginia.” 可知，Karen 带狗 Tiffy 飞往弗吉尼亚州。故选 C。"},{"n":15,"options":["thankful","generous","proud","sympathetic"],"answer":"A","answerText":"thankful","explanation":"考查形容词词义辨析。句意：他非常感激，给我发了一封很漂亮的电子邮件，并附上了照片。A. thankful 感激的；B. generous 慷慨的；C. proud 骄傲的；D. sympathetic 同情的。通读全文，再根据 “and sent me a nice e-mail with pictures.” 可推知，此处指对于作者的帮忙，George 非常感激。故选 A。"}]}]}],"totalPapers":10,"totalItems":11,"totalBlanks":160,"builtAt":"2026-10-25T07:11:44.395Z"};</script>
+<script>
+'use strict';
+
+/* ================= 状态 ================= */
+const S = {
+  bank: null,
+  item: null,        // 当前 item
+  answers: {},       // { n: raw }
+  graded: false,
+  sheetN: null,
+  fontLarge: localStorage.getItem('gk.fontLarge') === '1',
+};
+
+/* ================= 判分（与 engine.py 保持一致） ================= */
+function norm(s) {
+  if (s == null) return '';
+  let t = String(s).normalize('NFKC').trim().replace(/\s+/g, ' ');
+  t = t.replace(/[。.;；,，]+$/, '');
+  return t.toLowerCase();
+}
+
+function judge(q, given) {
+  const g = norm(given);
+  if (!g) return false;
+  const allowed = new Set();
+  for (const a of [q.answer, q.answerText, ...(q.accept || [])]) {
+    if (a) allowed.add(norm(a));
+  }
+  if (q.options) {
+    const letters = 'abcd';
+    if (g.length === 1 && letters.includes(g)) {
+      const idx = letters.indexOf(g);
+      if (idx < q.options.length) allowed.add(norm(q.options[idx]));
+    }
+  }
+  return allowed.has(g);
+}
+
+/* ================= 小工具 ================= */
+const $ = (sel) => document.querySelector(sel);
+const el = (tag, cls, text) => {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+};
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove('show'), 1600);
+}
+function answeredCount() {
+  return S.item.questions.filter(q => norm(S.answers[q.n]) !== '').length;
+}
+function typeLabel(t) {
+  return t === 'cloze' ? '完形填空' : '语法填空';
+}
+
+/** 来源标签：2025 全国一卷（新课标Ⅰ） -> （来源：2025 全国一卷 · 新课标Ⅰ） */
+function sourceLabel(paper) {
+  const name = String(paper.paperName).replace(/（(.+?)）/g, ' · $1');
+  return `（来源：${paper.year} ${name}）`;
+}
+
+/* ================= 首页 ================= */
+async function renderHome() {
+  const app = $('#app');
+  app.innerHTML = '';
+  if (!S.bank) {
+    app.appendChild(el('div', 'page', '正在加载题库…'));
+    return;
+  }
+  const page = el('div', 'page');
+  const hero = el('div', 'hero');
+  hero.appendChild(el('h2', null, '语言运用'));
+  hero.appendChild(el('p', null,
+    `${S.bank.totalPapers} 套卷 · ${S.bank.totalItems} 篇 · ${S.bank.totalBlanks} 空　新高考格式`));
+  page.appendChild(hero);
+
+  const list = el('div', 'list');
+  for (const paper of S.bank.papers) {
+    for (const it of paper.items) {
+      const card = el('button', 'card paper-card');
+      const main = el('div', 'paper-main');
+      main.appendChild(el('b', null, `${paper.year} ${paper.paperName}`));
+      main.appendChild(el('span', null, `${typeLabel(it.type)} · ${it.questions.length} 空 · ${it.score} 分`));
+      const meta = el('div', 'paper-meta');
+      meta.appendChild(el('span', 'chip', it.type === 'cloze' ? '15×1' : '10×1.5'));
+      card.appendChild(main);
+      card.appendChild(meta);
+      card.onclick = () => openItem(paper, it);
+      list.appendChild(card);
+    }
+  }
+  page.appendChild(list);
+
+  // 装到桌面 + 离线提示（已是独立窗口模式就不再提示）
+  const standalone = window.matchMedia('(display-mode: standalone)').matches
+    || navigator.standalone === true;
+  if (!standalone) {
+    const tip = el('p', 'install-tip');
+    tip.appendChild(el('b', null, '想离线也能刷题？'));
+    tip.appendChild(document.createTextNode(
+      '点右上角「···」→「在浏览器打开」，再从浏览器菜单里选「添加到主屏幕」。之后从桌面图标进入，断网也能做题。'));
+    page.appendChild(tip);
+  }
+
+  app.appendChild(page);
+}
+
+/* ================= 进入一篇 ================= */
+function openItem(paper, item) {
+  S.item = item;
+  S.paper = paper;
+  S.answers = {};
+  S.graded = false;
+  renderPractice();
+}
+
+/* ================= 答题页 ================= */
+function renderPractice() {
+  const app = $('#app');
+  app.innerHTML = '';
+  const { paper, item } = S;
+
+  /* 顶栏 */
+  const bar = el('div', 'topbar');
+  const back = el('button', 'icon-btn', '‹');
+  back.style.fontSize = '26px';
+  back.setAttribute('aria-label', '返回');
+  back.onclick = renderHome;
+  const sub = el('div', 'sub');
+  sub.appendChild(el('b', null, `${paper.year} ${paper.paperName}`));
+  const prog = el('span', 'progress');
+  sub.appendChild(prog);
+  const fs = el('button', 'fs-btn', S.fontLarge ? '大号字' : '标准字');
+  fs.onclick = () => {
+    S.fontLarge = !S.fontLarge;
+    localStorage.setItem('gk.fontLarge', S.fontLarge ? '1' : '0');
+    document.documentElement.style.setProperty('--fs-passage', S.fontLarge ? '19px' : '17px');
+    toast(S.fontLarge ? '已切换到大号字' : '已切回标准字');
+  };
+  bar.append(back, sub, fs);
+  app.appendChild(bar);
+
+  const page = el('div', 'page');
+  const instr = el('p', 'instruction', item.instruction || '');
+  page.appendChild(instr);
+  page.appendChild(el('span', 'source', sourceLabel(paper)));
+
+  if (S.graded) page.appendChild(buildResult());
+
+  const card = el('div', 'card passage-card');
+  for (const line of item.passage.split('\n')) {
+    if (!line.trim()) continue;
+    const p = el('p');
+    renderLine(p, line, item);
+    card.appendChild(p);
+  }
+  page.appendChild(card);
+  app.appendChild(page);
+
+  /* 底栏 */
+  const actions = el('div', 'actionbar');
+  if (S.graded) {
+    const again = el('button', 'btn btn-ghost', '重做');
+    again.onclick = () => { S.answers = {}; S.graded = false; renderPractice(); };
+    const next = el('button', 'btn btn-primary', '再练一篇');
+    next.onclick = () => {
+      const all = [];
+      for (const p of S.bank.papers) for (const it of p.items) all.push([p, it]);
+      const idx = all.findIndex(([, it]) => it === S.item);
+      const [np, ni] = all[(idx + 1) % all.length];
+      openItem(np, ni);
+    };
+    actions.append(again, next);
+  } else {
+    const submit = el('button', 'btn btn-primary', '提交答案');
+    submit.onclick = () => {
+      const total = item.questions.length;
+      const done = answeredCount();
+      if (done < total) {
+        // 不用 window.confirm：微信/QQ 内置浏览器会压制原生弹窗
+        showDialog({
+          title: '还没答完',
+          text: `还有 ${total - done} 空没作答，确定现在交卷吗？`,
+          okText: '交卷',
+          onOk: grade,
+        });
+        return;
+      }
+      grade();
+    };
+    actions.append(submit);
+  }
+  app.appendChild(actions);
+
+  updateProgress();
+}
+
+function updateProgress() {
+  const p = $('.progress');
+  if (!p || !S.item) return;
+  const total = S.item.questions.length;
+  const done = answeredCount();
+  p.textContent = S.graded ? '已判分' : `已答 ${done}/${total}`;
+  const submit = $('.btn-primary');
+  if (submit && submit.textContent === '提交答案') {
+    submit.disabled = done === 0;
+  }
+}
+
+/** 一行正文 → 文本 + 空位 */
+function renderLine(container, line, item) {
+  const parts = line.split(/\{\{(\d+)\}\}/);
+  parts.forEach((chunk, i) => {
+    if (i % 2 === 0) {
+      if (chunk) container.appendChild(document.createTextNode(chunk));
+      return;
+    }
+    const n = Number(chunk);
+    const q = item.questions.find(x => x.n === n);
+    container.appendChild(q.options ? clozeBlank(q) : grammarBlank(q));
+  });
+}
+
+function clozeBlank(q) {
+  const b = el('button', 'blank');
+  paintBlank(b, q);
+  b.onclick = () => openSheet(q.n);
+  return b;
+}
+
+function grammarBlank(q) {
+  const b = el('span', 'blank');
+  const input = el('input');
+  input.value = S.answers[q.n] || '';
+  input.placeholder = '填空';
+  input.autocapitalize = 'off';
+  input.autocomplete = 'off';
+  input.spellcheck = false;
+  input.disabled = S.graded;
+  input.addEventListener('input', () => {
+    S.answers[q.n] = input.value;
+    updateProgress();
+  });
+  b.appendChild(input);
+  if (S.graded) {
+    b.classList.add(judge(q, S.answers[q.n]) ? 'ok' : 'bad');
+    b.onclick = () => showExplain(q.n);
+  }
+  return b;
+}
+
+function paintBlank(b, q) {
+  const v = S.answers[q.n];
+  if (S.graded) {
+    b.textContent = v ? String(v).toUpperCase() : '—';
+    b.classList.add(judge(q, v) ? 'ok' : 'bad');
+    b.onclick = () => showExplain(q.n);
+    return;
+  }
+  if (norm(v)) {
+    b.textContent = String(v).toUpperCase();
+    b.classList.add('filled');
+  } else {
+    b.textContent = String(q.n);
+  }
+}
+
+/* ================= 选项面板 ================= */
+function openSheet(n) {
+  S.sheetN = n;
+  const q = S.item.questions.find(x => x.n === n);
+  const sheet = $('#sheet');
+  sheet.innerHTML = '';
+
+  const head = el('div', 'sheet-head');
+  head.appendChild(el('b', null, `第 ${n} 空`));
+  head.appendChild(el('span', 'muted', S.graded ? '正确答案已标注' : '选一个选项'));
+  sheet.appendChild(head);
+
+  const body = el('div', 'sheet-body');
+  q.options.forEach((text, i) => {
+    const letter = 'ABCD'[i];
+    const row = el('button', 'opt');
+    row.appendChild(el('span', 'letter', letter));
+    row.appendChild(el('span', null, text));
+    const chosen = norm(S.answers[n]) === letter.toLowerCase() || norm(S.answers[n]) === norm(text);
+    if (S.graded) {
+      const isAnswer = letter === q.answer;
+      if (isAnswer) row.classList.add('ok');
+      else if (chosen) row.classList.add('bad');
+    } else {
+      row.setAttribute('aria-pressed', String(chosen));
+      row.onclick = () => {
+        S.answers[n] = letter;
+        closeSheet();
+        refreshBlanks();
+        updateProgress();
+        const nextEmpty = S.item.questions.find(x => x.options && !norm(S.answers[x.n]));
+        if (nextEmpty) setTimeout(() => openSheet(nextEmpty.n), 180);
+      };
+    }
+    body.appendChild(row);
+  });
+  sheet.appendChild(body);
+
+  const foot = el('div', 'sheet-foot');
+  if (!S.graded) {
+    const clear = el('button', 'btn btn-ghost', '清除本题');
+    clear.style.flex = '1';
+    clear.onclick = () => {
+      delete S.answers[n];
+      closeSheet();
+      refreshBlanks();
+      updateProgress();
+    };
+    foot.appendChild(clear);
+  }
+  const close = el('button', 'btn btn-primary', '关闭');
+  close.onclick = closeSheet;
+  foot.appendChild(close);
+  sheet.appendChild(foot);
+
+  sheet.classList.add('show');
+  $('#scrim').classList.add('show');
+}
+
+function showExplain(n) {
+  const q = S.item.questions.find(x => x.n === n);
+  const sheet = $('#sheet');
+  sheet.innerHTML = '';
+  const head = el('div', 'sheet-head');
+  head.appendChild(el('b', null, `第 ${n} 空`));
+  head.appendChild(el('span', 'muted', `答案 ${q.answer}`));
+  sheet.appendChild(head);
+
+  const body = el('div', 'sheet-body');
+  const mine = el('div', 'explain-card');
+  mine.appendChild(el('h4', null, '你的作答'));
+  mine.appendChild(el('div', null,
+    (S.answers[n] ? String(S.answers[n]).toUpperCase() + '　' + (q.options ? q.options['ABCD'.index(String(S.answers[n]).toUpperCase())] || '' : '') : '未作答')));
+  body.appendChild(mine);
+
+  const ans = el('div', 'explain-card');
+  ans.appendChild(el('h4', null, '正确答案'));
+  ans.appendChild(el('div', null, q.answer + '　' + (q.answerText || '')));
+  body.appendChild(ans);
+
+  if (q.explanation) {
+    const ex = el('div', 'explain-card');
+    ex.appendChild(el('h4', null, '解析'));
+    ex.appendChild(el('div', null, q.explanation));
+    body.appendChild(ex);
+  }
+  if (S.paper) body.appendChild(el('p', 'source', sourceLabel(S.paper)));
+  sheet.appendChild(body);
+
+  const foot = el('div', 'sheet-foot');
+  const close = el('button', 'btn btn-primary', '知道了');
+  close.onclick = closeSheet;
+  foot.appendChild(close);
+  sheet.appendChild(foot);
+
+  sheet.classList.add('show');
+  $('#scrim').classList.add('show');
+}
+
+function closeSheet() {
+  $('#sheet').classList.remove('show');
+  $('#scrim').classList.remove('show');
+}
+
+/** 应用内确认框（替代 window.confirm，微信内置浏览器会吞掉原生弹窗） */
+function showDialog({ title, text, okText = '确定', cancelText = '取消', onOk }) {
+  const sheet = $('#sheet');
+  sheet.innerHTML = '';
+  const head = el('div', 'sheet-head');
+  head.appendChild(el('b', null, title));
+  sheet.appendChild(head);
+
+  const body = el('div', 'sheet-body');
+  const card = el('div', 'explain-card');
+  card.appendChild(el('div', null, text));
+  body.appendChild(card);
+  sheet.appendChild(body);
+
+  const foot = el('div', 'sheet-foot');
+  const cancel = el('button', 'btn btn-ghost', cancelText);
+  cancel.style.flex = '1';
+  cancel.onclick = closeSheet;
+  const ok = el('button', 'btn btn-primary', okText);
+  ok.onclick = () => { closeSheet(); onOk(); };
+  foot.append(cancel, ok);
+  sheet.appendChild(foot);
+
+  sheet.classList.add('show');
+  $('#scrim').classList.add('show');
+}
+$('#scrim').onclick = closeSheet;
+
+function refreshBlanks() {
+  const app = $('#app');
+  if (!S.item) return;
+  renderPractice();
+}
+
+/* ================= 判分 ================= */
+function grade() {
+  S.graded = true;
+  renderPractice();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function buildResult() {
+  const item = S.item;
+  const per = item.scorePerBlank || 1;
+  let correct = 0;
+  for (const q of item.questions) if (judge(q, S.answers[q.n])) correct++;
+  const total = item.questions.length;
+  const score = Math.round(correct * per * 10) / 10;
+
+  const box = el('div', 'result');
+  box.appendChild(el('span', 'score', String(score)));
+  box.appendChild(el('span', 'max', `/ ${item.score}`));
+  const d = el('div', 'detail');
+  d.appendChild(el('div', null, `正确 ${correct} / ${total}`));
+  d.appendChild(el('div', null, `正确率 ${Math.round(correct / total * 100)}%`));
+  box.appendChild(d);
+  return box;
+}
+
+/* ================= 启动 ================= */
+function initFont() {
+  document.documentElement.style.setProperty('--fs-passage', S.fontLarge ? '19px' : '17px');
+}
+
+/** 注册离线缓存：装到桌面后断网也能做题 */
+function registerSW() {
+  if (!('serviceWorker' in navigator)) return;
+  if (!location.protocol.startsWith('http')) return;   // file:// 不支持
+  navigator.serviceWorker.register('sw.js').catch(() => { /* 离线能力缺失不影响做题 */ });
+}
+
+async function boot() {
+  initFont();
+  registerSW();
+  try {
+    // 单文件构建版把题库直接内联成 window.__BANK__，静态托管时不需要任何后端
+    S.bank = window.__BANK__
+      || await (await fetch('/api/bank', { cache: 'no-store' })).json();
+  } catch (e) {
+    $('#app').innerHTML = '<div class="page">题库加载失败，请确认服务已启动。</div>';
+    return;
+  }
+  renderHome();
+}
+boot();
+</script>
+</body>
+</html>
