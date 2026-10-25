@@ -3,7 +3,7 @@
  * 策略：缓存优先 + 后台更新（有网时静默拉新版本，下次打开生效）。
  * 构建时 build.mjs 会把 CACHE 版本号替换掉，从而触发旧缓存淘汰。
  */
-const CACHE = 'gk-english-1792932829279';
+const CACHE = 'gk-english-1792934625033';
 const ASSETS = ['./', './index.html', './manifest.webmanifest'];
 
 self.addEventListener('install', (event) => {
