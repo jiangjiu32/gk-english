@@ -6,7 +6,7 @@
  *   - 其他资源：缓存优先 + 后台静默更新。
  *   - 新版本装好立即接管（skipWaiting + clients.claim），页面侧会提示「点这里刷新」。
  *
- * build.mjs 会把 1793015197933 换成构建时间戳，从而淘汰旧缓存。
+ * build.mjs 会把 1793015908095 换成构建时间戳，从而淘汰旧缓存。
  */
 const CACHE = 'gk-english-__VERSION__';
 const ASSETS = ['./', './index.html', './manifest.webmanifest'];
