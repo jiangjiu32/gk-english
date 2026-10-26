@@ -614,7 +614,7 @@
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="选项面板"></div>
 <div class="toast" id="toast"></div>
 
-<script defer src="bank.js?v=1793026835860"></script>
+<script defer src="bank-index.js?v=1793028038883"></script>
 <script>
 'use strict';
 
@@ -1106,12 +1106,54 @@ function openPaper(paper, type) {
   renderPaper();
 }
 
+/** 懒加载占位：原文还在下载时先显示这个 */
+function loadingBox(text) {
+  const box = el('div', 'empty');
+  box.appendChild(el('p', null, text));
+  return box;
+}
+
+/** 题库索引里只有「篇目骨架」，原文/选项/答案/解析按卷懒加载；
+ *  载入后用完整篇目原地替换，之后所有原有逻辑（题干、判分、解析）都不变。 */
+const PAPER_LOADS = new Map();
+function ensurePaperItems(paper) {
+  if (!paper || !(paper.items || []).some(it => it.stub)) return Promise.resolve(paper);
+  if (PAPER_LOADS.has(paper.id)) return PAPER_LOADS.get(paper.id);
+  const v = (S.bank && S.bank.version) || '';
+  const p = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = `papers/${encodeURIComponent(paper.id)}.js?v=${v}`;
+    s.onload = () => {
+      const items = ((window.__PAPERS__ || {})[paper.id]) || null;
+      if (!items || !items.length) { reject(new Error('empty')); return; }
+      paper.items = items;
+      resolve(paper);
+    };
+    s.onerror = () => reject(new Error('network'));
+    document.head.appendChild(s);
+  }).catch((e) => { PAPER_LOADS.delete(paper.id); throw e; });
+  PAPER_LOADS.set(paper.id, p);
+  return p;
+}
+
 function renderPaper() {
   const app = $('#app');
   app.innerHTML = '';
   const paper = S.paper;
   const info = typeInfo(S.module);
   app.appendChild(backBar(`${paper.year} ${paperLabel(paper)}`, info.label, renderModule));
+
+  /* 原文还没下过？先显示占位，下完再重画这一页 */
+  if ((paper.items || []).some(it => it.stub)) {
+    const ph = el('div', 'page');
+    ph.appendChild(loadingBox('正在载入这套卷的原文…'));
+    app.appendChild(ph);
+    ensurePaperItems(paper).then(renderPaper).catch(() => {
+      ph.innerHTML = '';
+      ph.appendChild(emptyBox('这套卷的原文没加载成功。检查一下网络，再进来一次就好。'));
+    });
+    return;
+  }
 
   const page = el('div', 'page');
   const rows = itemsOfPaper(paper, S.module);
@@ -3244,13 +3286,19 @@ function recordRow(r) {
 }
 
 /** 回看某一次记录（用当时的作答，配当前题库的解析） */
-function openRecord(id) {
+async function openRecord(id) {
   const rec = loadRecords().find(r => r.id === id);
   if (!rec) return;
   const found = resolveRecord(rec);
   if (!found) {
     toast('这篇已从题库移除，无法回看');
     return;
+  }
+  /* 索引里只有骨架，回看解析前需要先把这套卷的原文下载下来 */
+  if ((found[0].items || []).some(it => it.stub)) {
+    toast('正在载入原文…');
+    try { await ensurePaperItems(found[0]); } catch (e) { toast('原文没加载成功，联网后再试'); return; }
+    return openRecord(id);
   }
   S.paper = found[0];
   S.item = found[1];
@@ -3282,7 +3330,7 @@ function registerSW() {
      更新节流，学生照旧打开链接会一直卡在旧缓存里出不来。换一个脚本地址等于换一次
      注册，会立刻装上新的（网络优先）SW，从此每次打开都是最新版本。
      以后再改缓存策略，把 v 往上加一位即可。 */
-  navigator.serviceWorker.register('sw.js?v=2').then((reg) => {
+  navigator.serviceWorker.register('sw.js?v=3').then((reg) => {
     const checkNow = () => reg.update().catch(() => {});
     checkNow();
     /* 回到前台时顺手查一次新版本（手机上标签页常驻，这一步很关键） */
@@ -3324,8 +3372,9 @@ async function boot() {
     else resumeTimer();
   });
   try {
-    // 单文件构建版把题库直接内联成 window.__BANK__，静态托管时不需要任何后端
-    S.bank = window.__BANK__
+    // 优先用「索引」（bank-index.js，几十 KB，进站秒开）；
+    // 旧构建 / 开发服务器可能只提供完整题库（window.__BANK__），也照样能用
+    S.bank = window.__BANK_INDEX__ || window.__BANK__
       || await (await fetch('/api/bank', { cache: 'no-store' })).json();
   } catch (e) {
     $('#app').innerHTML = '<div class="page">题库加载失败，请确认服务已启动。</div>';
