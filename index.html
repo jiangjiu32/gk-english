@@ -614,7 +614,7 @@
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="选项面板"></div>
 <div class="toast" id="toast"></div>
 
-<script defer src="bank-index.js?v=1793028038883"></script>
+<script defer src="bank-index.js?v=1793029164052"></script>
 <script>
 'use strict';
 
@@ -1113,6 +1113,27 @@ function loadingBox(text) {
   return box;
 }
 
+/** 万一某套卷的原文包没传上去，就退回老的整体题库（bank.js）兜底，保证还能做题 */
+function itemsFromFullBank(paper) {
+  const full = window.__BANK__;
+  if (!full) return null;
+  const p = (full.papers || []).find(x => x.id === paper.id);
+  return p && p.items && p.items.length ? p.items : null;
+}
+let FULL_BANK_PROMISE = null;
+function loadFullBank() {
+  if (window.__BANK__) return Promise.resolve(window.__BANK__);
+  if (FULL_BANK_PROMISE) return FULL_BANK_PROMISE;
+  FULL_BANK_PROMISE = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'bank.js';
+    s.onload = () => (window.__BANK__ ? resolve(window.__BANK__) : reject(new Error('empty')));
+    s.onerror = () => reject(new Error('network'));
+    document.head.appendChild(s);
+  });
+  return FULL_BANK_PROMISE;
+}
+
 /** 题库索引里只有「篇目骨架」，原文/选项/答案/解析按卷懒加载；
  *  载入后用完整篇目原地替换，之后所有原有逻辑（题干、判分、解析）都不变。 */
 const PAPER_LOADS = new Map();
@@ -1123,13 +1144,22 @@ function ensurePaperItems(paper) {
   const p = new Promise((resolve, reject) => {
     const s = document.createElement('script');
     s.src = `papers/${encodeURIComponent(paper.id)}.js?v=${v}`;
-    s.onload = () => {
-      const items = ((window.__PAPERS__ || {})[paper.id]) || null;
-      if (!items || !items.length) { reject(new Error('empty')); return; }
+    const take = (items) => {
+      if (!items || !items.length) return false;
       paper.items = items;
-      resolve(paper);
+      return true;
     };
-    s.onerror = () => reject(new Error('network'));
+    s.onload = () => {
+      if (take((window.__PAPERS__ || {})[paper.id])) { resolve(paper); return; }
+      if (take(itemsFromFullBank(paper))) { resolve(paper); return; }
+      reject(new Error('empty'));
+    };
+    s.onerror = () => {
+      loadFullBank().then(() => {
+        if (take(itemsFromFullBank(paper))) resolve(paper);
+        else reject(new Error('network'));
+      }).catch(() => reject(new Error('network')));
+    };
     document.head.appendChild(s);
   }).catch((e) => { PAPER_LOADS.delete(paper.id); throw e; });
   PAPER_LOADS.set(paper.id, p);
