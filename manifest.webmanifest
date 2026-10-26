@@ -1,7 +1,7 @@
 {
-  "name": "高考英语 · 语言运用",
+  "name": "高考英语 · 阅读与语言运用",
   "short_name": "英语刷题",
-  "description": "新高考语言运用（完形填空 + 语法填空）刷题，离线可用",
+  "description": "新高考英语刷题：阅读理解、七选五、完形填空、语法填空，离线可用",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
