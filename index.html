@@ -614,7 +614,7 @@
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="选项面板"></div>
 <div class="toast" id="toast"></div>
 
-<script defer src="bank-index.js?v=1793081527111"></script>
+<script defer src="bank-index.js?v=1793082498812"></script>
 <script>
 'use strict';
 
@@ -1040,7 +1040,10 @@ function mistakesOfPart(part) {
         byKey.set(key, e);
       }
       e.tries++;
-      if (!right) e.wrongs++;
+      if (!right) {
+        e.wrongs++;
+        if ((rec.at || 0) >= (e.wrongAt || 0)) { e.wrongAt = rec.at || 0; e.wrongAns = mine; }
+      }
       if ((rec.at || 0) >= e.at) {
         e.at = rec.at || 0; e.mine = mine; e.recId = rec.id; e.lastRight = right;
       }
@@ -1065,6 +1068,172 @@ function rightText(q) {
   if (q.answer !== undefined && q.answer !== null) return String(q.answer);
   const c = correctList(q);
   return c.length ? String(c[0]) : '';
+}
+
+/** 单题解析块：解析页与错题集共用同一份渲染，排版完全一致 */
+function questionBlock(item, q, given) {
+  const ok = judge(q, given);
+  const mine = String(given == null ? '' : given).trim();
+  const isLetter = !!q.options || !!item.choices;
+  const mineText = mine
+    ? (isLetter
+      ? `${mine.toUpperCase()}. ${q.options ? (q.options['ABCD'.indexOf(mine.toUpperCase())] || '') : choiceTextOf(item, mine)}`
+      : mine)
+    : '未作答';
+  const unitWord = item.type === 'reading' ? '题' : '空';
+  const numLabel = item.type === 'reading' ? (q.no || q.n) : q.n;
+
+  const box = el('div', `rv-item ${mine ? (ok ? 'rv-ok' : 'rv-bad') : 'rv-skip'}`);
+
+  const h = el('div', 'rv-head');
+  h.appendChild(el('b', null, `第 ${numLabel} ${unitWord}`));
+  h.appendChild(el('span', `rv-badge ${ok ? 'rv-badge-ok' : 'rv-badge-bad'}`,
+    mine ? (ok ? '正确' : '错误') : '未作答'));
+  box.appendChild(h);
+
+  /* 阅读题要先看到题干，不然不知道在问什么 */
+  if (q.stem) {
+    const stem = el('div', 'rv-stem');
+    stem.appendChild(el('span', null, q.stem));
+    box.appendChild(stem);
+  }
+
+  const row = el('div', 'rv-row');
+  row.appendChild(el('span', 'rv-k', '你的答案'));
+  row.appendChild(el('span', `rv-v${!mine ? ' rv-v-skip' : (ok ? ' ok' : ' bad')}`, mineText));
+  box.appendChild(row);
+
+  const row2 = el('div', 'rv-row');
+  row2.appendChild(el('span', 'rv-k', '正确答案'));
+  /* 七选五：answerLabel(q) 已把选项文字带上（answerText 就是那句选项），
+     只有老数据缺 answerText 时才用 choiceTextOf 兜一次，否则会重复打印两遍 */
+  let ansText = answerLabel(q);
+  if (item.choices && !q.options && !String(q.answerText || '').trim()) {
+    const ct = choiceTextOf(item, q.answer);
+    if (ct) ansText += `. ${ct}`;
+  }
+  row2.appendChild(el('span', 'rv-v ok', ansText));
+  box.appendChild(row2);
+
+  // 完形：四个选项都列出来，正确项高亮，选错的标红
+  if (q.options) {
+    const opts = el('div', 'rv-opts');
+    q.options.forEach((text, i) => {
+      const letter = 'ABCD'[i];
+      const isRight = letter === String(q.answer).toUpperCase();
+      const isMine = letter === mine.toUpperCase();
+      const o = el('div', `rv-opt${isRight ? ' right' : (isMine ? ' wrong' : '')}`);
+      o.appendChild(el('b', null, `${letter}.`));
+      o.appendChild(el('span', null, text));
+      opts.appendChild(o);
+    });
+    box.appendChild(opts);
+  }
+
+  const ex = el('div', 'rv-ex');
+  ex.appendChild(el('b', null, '解析'));
+  ex.appendChild(el('p', null, q.explanation || '（本题暂无解析）'));
+  box.appendChild(ex);
+  return box;
+}
+
+/** 这一题对应的完整题目（索引里只有骨架，懒加载完成后按 id 取回完整版） */
+function fullQuestionOf(e) {
+  const item = e.full || e.item;
+  return (item.questions || []).find((x) => x.n === e.q.n) || e.q;
+}
+
+/** 原题：只保留这一题 —— 其它空位只是编号，被问的这一空直接填上正确答案 */
+function mistakePassageCard(item, target) {
+  const card = el('div', 'card passage-card');
+  for (const line of String(item.passage || '').split('\n')) {
+    if (!line.trim()) continue;
+    const p = el('p');
+    const parts = line.split(/\{\{(\d+)\}\}/);
+    parts.forEach((chunk, i) => {
+      if (i % 2 === 0) { if (chunk) p.appendChild(document.createTextNode(chunk)); return; }
+      const qn = Number(chunk);
+      if (qn === Number(target.n)) {
+        const span = el('span', 'ans-inline');
+        span.textContent = target.options
+          ? `${target.answer}. ${target.answerText || ''}`.trim()
+          : (correctList(target)[0] || target.answer);
+        p.appendChild(span);
+      } else {
+        const b = el('span', 'blank');
+        b.textContent = qn;
+        p.appendChild(b);
+      }
+    });
+    card.appendChild(p);
+  }
+  return card;
+}
+
+/** 点错题列表里的一条：载入这篇的原文（会自动懒加载），然后只展示这一题 */
+async function openMistake(e) {
+  S.mistake = e;
+  S.mistakePart = partOf(e.type) || S.mistakePart;
+  if ((e.paper.items || []).some((it) => it.stub)) {
+    renderMistakeDetail();                                   // 先出占位
+    try { await ensurePaperItems(e.paper); } catch (err) { toast('原文没加载成功，联网后再试'); return; }
+  }
+  e.full = (e.paper.items || []).find((it) => it.id === e.item.id) || null;
+  renderMistakeDetail();
+}
+
+/** 错题详情：只有这一题的原题 + 这一题的解析 */
+function renderMistakeDetail() {
+  const app = $('#app');
+  app.innerHTML = '';
+  const e = S.mistake;
+  if (!e) { renderMistakes(); return; }
+
+  const bar = el('div', 'topbar');
+  const back = el('button', 'icon-btn', '‹');
+  back.style.fontSize = '26px';
+  back.setAttribute('aria-label', '返回错题集');
+  back.onclick = renderMistakes;
+  const sub = el('div', 'sub');
+  sub.appendChild(el('b', null, `${typeLabel(e.type)} · ${qTitle(e)}`));
+  sub.appendChild(el('span', 'progress', `${e.paper.year} ${paperLabel(e.paper)}`));
+  bar.append(back, sub);
+  app.appendChild(bar);
+
+  const page = el('div', 'page');
+  if (!e.full) {
+    page.appendChild(loadingBox('正在载入这一题的原文…'));
+    app.appendChild(page);
+    return;
+  }
+
+  const q = fullQuestionOf(e);
+  const wrongAns = e.wrongAns != null ? e.wrongAns : e.mine;
+
+  /* 原题 */
+  const sec1 = el('section', 'section');
+  sec1.appendChild(sectionHead('原题', '只有这一题，别的空不显示答案'));
+  if (e.full.passage) sec1.appendChild(mistakePassageCard(e.full, q));
+  else sec1.appendChild(el('p', 'section-note', '（这一题没有原文）'));
+  page.appendChild(sec1);
+
+  /* 这一题：做错的那一次 + 解析 */
+  const sec2 = el('section', 'section');
+  sec2.appendChild(sectionHead('这一题', '按你做错的那一次显示'));
+  if (q.tag) {
+    const meta = el('div', 'paper-meta');
+    meta.appendChild(el('span', 'chip', q.tag));
+    sec2.appendChild(meta);
+  }
+  sec2.appendChild(questionBlock(e.full, q, wrongAns));
+  if (e.lastRight) {
+    sec2.appendChild(el('p', 'section-note', '这道题后来做对过，记录仍然留在这里。'));
+  }
+  sec2.appendChild(el('p', 'source', sourceLabel(e.paper)));
+  page.appendChild(sec2);
+
+  app.appendChild(page);
+  window.scrollTo({ top: 0 });
 }
 
 function renderMistakes() {
@@ -1125,7 +1294,7 @@ function renderMistakes() {
       card.appendChild(main);
       card.appendChild(meta);
       card.appendChild(el('span', 'module-arrow', '›'));
-      card.onclick = () => openRecord(e.recId, renderMistakes);
+      card.onclick = () => openMistake(e);
       list.appendChild(card);
     }
     sec.appendChild(list);
@@ -2527,71 +2696,7 @@ function renderReview() {
   panelA.appendChild(head);
 
   for (const q of item.questions) {
-    const given = S.answers[q.n];
-    const ok = judge(q, given);
-    const mine = String(given == null ? '' : given).trim();
-    const isLetter = !!q.options || !!item.choices;
-    const mineText = mine
-      ? (isLetter
-        ? `${mine.toUpperCase()}. ${q.options ? (q.options['ABCD'.indexOf(mine.toUpperCase())] || '') : choiceTextOf(item, mine)}`
-        : mine)
-      : '未作答';
-    const unitWord = item.type === 'reading' ? '题' : '空';
-    const numLabel = item.type === 'reading' ? (q.no || q.n) : q.n;
-
-    const box = el('div', `rv-item ${mine ? (ok ? 'rv-ok' : 'rv-bad') : 'rv-skip'}`);
-
-    const h = el('div', 'rv-head');
-    h.appendChild(el('b', null, `第 ${numLabel} ${unitWord}`));
-    h.appendChild(el('span', `rv-badge ${ok ? 'rv-badge-ok' : 'rv-badge-bad'}`,
-      mine ? (ok ? '正确' : '错误') : '未作答'));
-    box.appendChild(h);
-
-    /* 阅读题要先看到题干，不然不知道在问什么 */
-    if (q.stem) {
-      const stem = el('div', 'rv-stem');
-      stem.appendChild(el('span', null, q.stem));
-      box.appendChild(stem);
-    }
-
-    const row = el('div', 'rv-row');
-    row.appendChild(el('span', 'rv-k', '你的答案'));
-    row.appendChild(el('span', `rv-v${!mine ? ' rv-v-skip' : (ok ? ' ok' : ' bad')}`, mineText));
-    box.appendChild(row);
-
-    const row2 = el('div', 'rv-row');
-    row2.appendChild(el('span', 'rv-k', '正确答案'));
-    /* 七选五：answerLabel(q) 已把选项文字带上（answerText 就是那句选项），
-       只有老数据缺 answerText 时才用 choiceTextOf 兜一次，否则会重复打印两遍 */
-    let ansText = answerLabel(q);
-    if (item.choices && !q.options && !String(q.answerText || '').trim()) {
-      const ct = choiceTextOf(item, q.answer);
-      if (ct) ansText += `. ${ct}`;
-    }
-    row2.appendChild(el('span', 'rv-v ok', ansText));
-    box.appendChild(row2);
-
-    // 完形：四个选项都列出来，正确项高亮，选错的标红
-    if (q.options) {
-      const opts = el('div', 'rv-opts');
-      q.options.forEach((text, i) => {
-        const letter = 'ABCD'[i];
-        const isRight = letter === String(q.answer).toUpperCase();
-        const isMine = letter === mine.toUpperCase();
-        const o = el('div', `rv-opt${isRight ? ' right' : (isMine ? ' wrong' : '')}`);
-        o.appendChild(el('b', null, `${letter}.`));
-        o.appendChild(el('span', null, text));
-        opts.appendChild(o);
-      });
-      box.appendChild(opts);
-    }
-
-    const ex = el('div', 'rv-ex');
-    ex.appendChild(el('b', null, '解析'));
-    ex.appendChild(el('p', null, q.explanation || '（本题暂无解析）'));
-    box.appendChild(ex);
-
-    panelA.appendChild(box);
+    panelA.appendChild(questionBlock(item, q, S.answers[q.n]));
   }
 
   panelA.appendChild(el('p', 'source', sourceLabel(paper)));
