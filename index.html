@@ -614,7 +614,7 @@
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="选项面板"></div>
 <div class="toast" id="toast"></div>
 
-<script defer src="bank-index.js?v=1793029164052"></script>
+<script defer src="bank-index.js?v=1793081527111"></script>
 <script>
 'use strict';
 
@@ -979,6 +979,7 @@ function renderPart() {
   /* 本部分自己的记录与热力图：点进去才看得到 */
   const recSec = el('section', 'section');
   recSec.appendChild(partRecordEntry(p.part));
+  recSec.appendChild(partMistakeEntry(p.part));
   page.appendChild(recSec);
 
   app.appendChild(page);
@@ -997,6 +998,142 @@ function partRecordEntry(part) {
     renderRecords();
   };
   return card;
+}
+
+/** 部分页上的错题集入口：跟热力图一样，外面只写四个字，不摆数量、不摆对错 */
+function partMistakeEntry(part) {
+  const card = el('button', 'record-card');
+  const main = el('div', 'paper-main');
+  main.appendChild(el('b', null, '错题集'));
+  card.appendChild(main);
+  card.appendChild(el('span', 'module-arrow', '›'));
+  card.onclick = () => {
+    S.mistakePart = part;
+    renderMistakes();
+  };
+  return card;
+}
+
+/* ================= 错题集 =================
+ * 数据来源就是做题记录里的 answers，对错判定复用判分用的 judge()，
+ * 所以不会出现「判分说错、错题集说对」这种不一致；列表也不需要下载任何卷子原文。
+ * 四个部分各自独立：只统计属于这个部分的题型。
+ * 同一道题错多次只留一条，标「错 N 次」；后来做对的标「已订正」，记录仍然留着不删。
+ */
+function mistakesOfPart(part) {
+  const types = new Set(typesOfPart(part));
+  const byKey = new Map();
+  for (const rec of loadRecords()) {
+    if (!rec.itemId || !types.has(rec.type)) continue;
+    const found = resolveRecord(rec);
+    if (!found) continue;
+    const item = found[1];
+    for (const q of (item.questions || [])) {
+      const mine = (rec.answers || {})[q.n];
+      if (mine === undefined || mine === null || String(mine).trim() === '') continue;
+      const right = judge(q, mine);
+      const key = `${item.id}#${q.n}`;
+      let e = byKey.get(key);
+      if (!e) {
+        e = { key, item, paper: found[0], q, type: item.type, mine, right,
+              at: rec.at || 0, recId: rec.id, wrongs: 0, tries: 0, lastRight: right };
+        byKey.set(key, e);
+      }
+      e.tries++;
+      if (!right) e.wrongs++;
+      if ((rec.at || 0) >= e.at) {
+        e.at = rec.at || 0; e.mine = mine; e.recId = rec.id; e.lastRight = right;
+      }
+    }
+  }
+  const list = [...byKey.values()].filter((e) => e.wrongs > 0);
+  list.sort((a, b) => b.at - a.at);
+  return list;
+}
+
+/** 题干编号显示：第 43 题 */
+function qTitle(e) {
+  const nums = (e.item.questions || []).map((x) => String(x.no == null ? '' : x.no)).filter((s) => /^\d+$/.test(s));
+  const i = nums.indexOf(String(e.q.no));
+  if (i >= 0) return `第 ${nums[i]} 题`;
+  return e.q.no ? `第 ${e.q.no} 题` : '';
+}
+
+/** 正确答案的可读写法 */
+function rightText(q) {
+  if (q.answerText) return String(q.answerText);
+  if (q.answer !== undefined && q.answer !== null) return String(q.answer);
+  const c = correctList(q);
+  return c.length ? String(c[0]) : '';
+}
+
+function renderMistakes() {
+  const app = $('#app');
+  app.innerHTML = '';
+  const part = S.mistakePart || 2;
+  const def = partDef(part) || {};
+  const label = [def.code || `第${part}部分`, def.title || ''].filter(Boolean).join('　');
+  const all = mistakesOfPart(part);
+  const open = all.filter((e) => !e.lastRight);
+  const papers = new Set(all.map((e) => e.paper.id)).size;
+
+  app.appendChild(backBar(`${label} 错题集`, '只有点进来才看得到', renderPart));
+
+  const page = el('div', 'page');
+
+  /* 整体统计 */
+  const stat = el('section', 'section');
+  stat.appendChild(sectionHead('错题统计', all.length ? `共 ${all.length} 道` : '还没有错题'));
+  const box = el('div', 'card');
+  const bmain = el('div', 'paper-main');
+  if (!all.length) {
+    bmain.appendChild(el('b', null, '这里还是空的'));
+    bmain.appendChild(el('span', null, '做完这个部分的题，做错的会自动收进来。'));
+  } else {
+    bmain.appendChild(el('b', null, `共 ${all.length} 道错题 · 涉及 ${papers} 套卷`));
+    bmain.appendChild(el('span', null, open.length === all.length
+      ? '按最近做错的时间排，最上面的最近'
+      : `其中 ${all.length - open.length} 道后来做对了（标了「已订正」）`));
+    const meta = el('div', 'paper-meta');
+    const byType = new Map();
+    for (const e of all) byType.set(e.type, (byType.get(e.type) || 0) + 1);
+    for (const [t, n] of byType) meta.appendChild(el('span', 'chip', `${typeLabel(t)} ${n}`));
+    if (open.length) meta.appendChild(el('span', 'chip', `待订正 ${open.length}`));
+    box.appendChild(bmain);
+    box.appendChild(meta);
+  }
+  if (!all.length) box.appendChild(bmain);
+  stat.appendChild(box);
+  page.appendChild(stat);
+
+  /* 错题列表 */
+  if (all.length) {
+    const sec = el('section', 'section');
+    sec.appendChild(sectionHead('错题列表', '点一条看它的解析'));
+    const list = el('div', 'list');
+    for (const e of all) {
+      const card = el('button', 'card paper-card');
+      const main = el('div', 'paper-main');
+      main.appendChild(el('b', null, `${typeLabel(e.type)} · ${qTitle(e)}`));
+      main.appendChild(el('span', null, e.lastRight
+        ? `${e.paper.year} ${paperLabel(e.paper)} · 正确 ${rightText(e.q)} · 上次已经答对`
+        : `${e.paper.year} ${paperLabel(e.paper)} · 你答 ${e.mine} · 正确 ${rightText(e.q)}`));
+      const meta = el('div', 'paper-meta');
+      if (e.q.tag) meta.appendChild(el('span', 'chip', e.q.tag));
+      if (e.wrongs > 1) meta.appendChild(el('span', 'chip', `错 ${e.wrongs} 次`));
+      if (e.lastRight) meta.appendChild(el('span', 'chip', '已订正'));
+      card.appendChild(main);
+      card.appendChild(meta);
+      card.appendChild(el('span', 'module-arrow', '›'));
+      card.onclick = () => openRecord(e.recId, renderMistakes);
+      list.appendChild(card);
+    }
+    sec.appendChild(list);
+    page.appendChild(sec);
+  }
+
+  app.appendChild(page);
+  window.scrollTo({ top: 0 });
 }
 
 /** 装到桌面 + 离线提示（已是独立窗口模式就不再提示） */
@@ -2367,7 +2504,7 @@ function renderReview() {
   const back = el('button', 'icon-btn', '‹');
   back.style.fontSize = '26px';
   back.setAttribute('aria-label', isHistory ? '返回记录' : '返回答题');
-  back.onclick = isHistory ? renderRecords : renderPractice;
+  back.onclick = isHistory ? (S.recordBack || renderRecords) : renderPractice;
   const sub = el('div', 'sub');
   sub.appendChild(el('b', null, isHistory ? '历史记录 · 解析' : '整体解析'));
   sub.appendChild(el('span', 'progress', `${paper.year} ${paperLabel(paper)}`));
@@ -3316,7 +3453,8 @@ function recordRow(r) {
 }
 
 /** 回看某一次记录（用当时的作答，配当前题库的解析） */
-async function openRecord(id) {
+async function openRecord(id, back) {
+  S.recordBack = back || renderRecords;
   const rec = loadRecords().find(r => r.id === id);
   if (!rec) return;
   const found = resolveRecord(rec);
@@ -3328,7 +3466,7 @@ async function openRecord(id) {
   if ((found[0].items || []).some(it => it.stub)) {
     toast('正在载入原文…');
     try { await ensurePaperItems(found[0]); } catch (e) { toast('原文没加载成功，联网后再试'); return; }
-    return openRecord(id);
+    return openRecord(id, back);      // 递归时要带上返回页，否则「返回」会跑到记录页
   }
   S.paper = found[0];
   S.item = found[1];
