@@ -614,7 +614,7 @@
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="选项面板"></div>
 <div class="toast" id="toast"></div>
 
-<script defer src="bank-index.js?v=1793082498812"></script>
+<script defer src="bank-index.js?v=1793082882265"></script>
 <script>
 'use strict';
 
@@ -1210,26 +1210,27 @@ function renderMistakeDetail() {
   const q = fullQuestionOf(e);
   const wrongAns = e.wrongAns != null ? e.wrongAns : e.mine;
 
-  /* 原题 */
+  /* 先看这一题：题目、做错的那一次、正确答案、解析 —— 完形的原文很长，
+     答案和解析放上面，才不用滑半天才看到「我为什么错了」。 */
   const sec1 = el('section', 'section');
-  sec1.appendChild(sectionHead('原题', '只有这一题，别的空不显示答案'));
-  if (e.full.passage) sec1.appendChild(mistakePassageCard(e.full, q));
-  else sec1.appendChild(el('p', 'section-note', '（这一题没有原文）'));
-  page.appendChild(sec1);
-
-  /* 这一题：做错的那一次 + 解析 */
-  const sec2 = el('section', 'section');
-  sec2.appendChild(sectionHead('这一题', '按你做错的那一次显示'));
+  sec1.appendChild(sectionHead('这一题', '按你做错的那一次显示'));
   if (q.tag) {
     const meta = el('div', 'paper-meta');
     meta.appendChild(el('span', 'chip', q.tag));
-    sec2.appendChild(meta);
+    sec1.appendChild(meta);
   }
-  sec2.appendChild(questionBlock(e.full, q, wrongAns));
+  sec1.appendChild(questionBlock(e.full, q, wrongAns));
   if (e.lastRight) {
-    sec2.appendChild(el('p', 'section-note', '这道题后来做对过，记录仍然留在这里。'));
+    sec1.appendChild(el('p', 'section-note', '这道题后来做对过，记录仍然留在这里。'));
   }
-  sec2.appendChild(el('p', 'source', sourceLabel(e.paper)));
+  sec1.appendChild(el('p', 'source', sourceLabel(e.paper)));
+  page.appendChild(sec1);
+
+  /* 再看原题：只有这一题，别的空不显示答案 */
+  const sec2 = el('section', 'section');
+  sec2.appendChild(sectionHead('原题', '只有这一题，别的空不显示答案'));
+  if (e.full.passage) sec2.appendChild(mistakePassageCard(e.full, q));
+  else sec2.appendChild(el('p', 'section-note', '（这一题没有原文）'));
   page.appendChild(sec2);
 
   app.appendChild(page);
